@@ -1,0 +1,10 @@
+[package]
+name = "nexus_interface"
+version = "2.0.0-rc.final"
+edition = "2024"
+
+[dependencies]
+nexus_primitives = { local = "../primitives" }
+
+[addresses]
+nexus_interface = "0x0"
