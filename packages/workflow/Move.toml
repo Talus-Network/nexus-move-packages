@@ -1,0 +1,14 @@
+[package]
+name = "nexus_workflow"
+version = "2.0.0-rc.final"
+edition = "2024"
+
+[dependencies]
+nexus_kernel = { local = "../kernel" }
+nexus_primitives = { local = "../primitives" }
+nexus_interface = { local = "../interface" }
+nexus_tool = { local = "../tool" }
+nexus_registry = { local = "../registry" }
+
+[addresses]
+nexus_workflow = "0x0"

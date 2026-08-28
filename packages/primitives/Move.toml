@@ -1,0 +1,7 @@
+[package]
+name = "nexus_primitives"
+version = "2.0.0-rc.final"
+edition = "2024"
+
+[addresses]
+nexus_primitives = "0x0"
