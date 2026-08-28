@@ -1,0 +1,52 @@
+name: Move interfaces
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Move interfaces
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUI_VERSION: "1.78.0"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install Sui CLI
+        shell: bash
+        run: |
+          archive="${RUNNER_TEMP}/sui.tgz"
+          install_dir="${RUNNER_TEMP}/sui-bin"
+          mkdir -p "${install_dir}"
+          curl --fail --location --silent --show-error \
+            "https://github.com/MystenLabs/sui/releases/download/testnet-v${SUI_VERSION}/sui-testnet-v${SUI_VERSION}-ubuntu-x86_64.tgz" \
+            --output "${archive}"
+          tar -xzf "${archive}" -C "${install_dir}"
+          echo "${install_dir}" >> "${GITHUB_PATH}"
+
+      - name: Verify Sui CLI
+        shell: bash
+        run: |
+          version="$(sui --version)"
+          echo "${version}"
+          [[ "${version}" == "sui ${SUI_VERSION}" || \
+            "${version}" == "sui ${SUI_VERSION}-"* || \
+            "${version}" == "sui ${SUI_VERSION}+"* ]]
+
+      - name: Build Testnet interfaces
+        run: sui move build --path packages/scheduler --build-env testnet --silence-warnings
+
+      - name: Build Mainnet interfaces
+        run: sui move build --path packages/scheduler --build-env mainnet --silence-warnings

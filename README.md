@@ -15,6 +15,35 @@ The `public native fun` declarations intentionally have no local
 implementation. They support compilation, but a local Move test cannot execute
 them.
 
+## MVR dependencies
+
+For Testnet development, run these commands from your Move package:
+
+```sh
+mvr add @talus/nexus-scheduler --network testnet
+sui move build --build-env testnet
+```
+
+For Mainnet, use the Mainnet registry and build environment:
+
+```sh
+mvr add @talus/nexus-scheduler --network mainnet
+sui move build --build-env mainnet
+```
+
+Replace `nexus-scheduler` with another listed MVR package when your application
+needs only that package. The package manager resolves its transitive
+dependencies.
+
+## Networks
+
+Use Testnet while developing integrations that call Nexus. Use Mainnet for
+production transactions. Every package includes a `Published.toml` file that
+records its Testnet and Mainnet deployment.
+
+Local Move tests may cover application logic that does not call Nexus. Tests
+that execute Nexus functions must run against the Testnet deployment.
+
 ## Workflow interface
 
 `nexus_workflow` exposes only the workflow declarations intended for direct
@@ -32,10 +61,28 @@ of this repository.
 
 ## Packages
 
-- `nexus_kernel`
-- `nexus_primitives`
-- `nexus_interface`
-- `nexus_tool`
-- `nexus_registry`
-- `nexus_workflow`
-- `nexus_scheduler`
+| Package | Intended MVR name | Use |
+| --- | --- | --- |
+| `nexus_primitives` | `@talus/nexus-primitives` | Direct dependency |
+| `nexus_interface` | `@talus/nexus-interface` | Direct dependency |
+| `nexus_tool` | `@talus/nexus-tool` | Direct dependency |
+| `nexus_registry` | `@talus/nexus-registry` | Direct dependency |
+| `nexus_workflow` | `@talus/nexus-workflow` | Direct dependency |
+| `nexus_scheduler` | `@talus/nexus-scheduler` | Direct dependency |
+| `nexus_kernel` | None | Transitive dependency only |
+
+`nexus_kernel` supports the package graph but is not intended for direct use.
+Applications should not add it as a direct dependency.
+
+## Source verification
+
+This repository contains interface declarations, not the implementation source
+used to build the published bytecode. `sui client verify-source` is therefore
+expected to report bytecode mismatches. The interfaces support compilation
+against the published package addresses, not exact source verification.
+
+Do not publish these interface packages.
+
+## License
+
+Licensed under the Apache License 2.0. See [LICENSE](LICENSE).
