@@ -1,38 +1,69 @@
 # Nexus Workflow
 
-Public Move interfaces for reading and validating Nexus workflow and DAG
-execution state. Workflow mutations are available through Nexus Scheduler.
+Public interfaces for reading and validating Nexus workflow and DAG execution
+state. Authorized workflow mutations are exposed through Nexus Scheduler.
 
-## Add the package
+> **Important:** This is an interface package for compilation. Its local
+> function bodies are deliberate aborting stubs, not the published Nexus
+> implementation and not a local mock.
 
-For Testnet:
+## Supported consumer surface
+
+The package intentionally exposes only declarations intended for direct
+composition:
+
+- `execution::DAGExecution` and its public read and validation helpers;
+- `invocation_adapter::new_request` and `invocation_adapter::is_locked`.
+
+Internal workflow storage, values used only during settlement, event layouts,
+and functions requiring runtime permits are omitted. Use `nexus_scheduler` for
+the authorized mutation paths.
+
+## Add the dependency
+
+```toml
+[dependencies]
+nexus_workflow = { r.mvr = "@talus/nexus-workflow" }
+```
+
+The basic Nexus packages, including the internal kernel, are resolved
+transitively. Build for the selected network:
 
 ```sh
-mvr add @talus/nexus-workflow --network testnet
 sui move build --build-env testnet
+# Use --build-env mainnet only for a Mainnet production build.
 ```
 
-For Mainnet:
+## What happens at runtime
 
-```sh
-mvr add @talus/nexus-workflow --network mainnet
-sui move build --build-env mainnet
-```
+- `sui move build` reads these declarations and links the consumer to the
+  selected network's published `nexus_workflow` address.
+- `sui move test` runs locally. Calling an existing interface function aborts
+  with `ELocalExecutionUnavailable` because the implementation is not here.
+- A submitted Testnet or Mainnet transaction executes the Nexus bytecode at
+  the published address, not the local aborting body.
+
+## Local and integration tests
+
+Use `#[test_only]` module extensions only to construct or observe workflow
+value shapes needed by local application logic. Extensions require
+`edition = "2024.alpha"` and cannot reproduce DAG advancement, invocation,
+verification, settlement, failure, event, or shared object behavior.
+
+Exercise real workflow behavior on Testnet and assert transaction effects,
+events, and execution object readback. `--build-env testnet` resolves Testnet
+dependencies; the local Move test VM remains offline.
+
+Read the complete
+[stub and testing guide](https://github.com/Talus-Network/nexus-move-packages#local-move-tests).
 
 ## Documentation
 
-See the [Nexus Workflow Move reference](https://docs.talus.network/reference/move/nexus_workflow).
+- [Onchain development setup](https://docs.talus.network/guides/getting-started/prepare-onchain-development)
+- [Nexus Workflow Move reference](https://docs.talus.network/reference/move/nexus_workflow)
 
-## Local development
+## Safety
 
-These sources are interface declarations for the Nexus package published on
-Sui. They support dependency resolution, compilation, and local module
-extensions. Existing Nexus functions abort during local execution. Use
-extensions to construct and inspect values needed by application tests. Use the
-Testnet deployment when a test must execute published Nexus behavior. See
-[Local Move tests](../../README.md#local-move-tests).
-
-Nexus Kernel is resolved transitively and should not be added directly. This
-package is a dependency only. Do not publish it. Source verification against
-the onchain bytecode is expected to report differences because this repository
-does not contain the implementation source.
+Do not publish this package or use it to upgrade Nexus. Source verification
+against published Nexus bytecode is expected to report a mismatch because this
+repository contains interfaces rather than implementation source.
