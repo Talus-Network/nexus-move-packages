@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_scheduler::schedule`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_scheduler::schedule;
 
-//! Interface for [`nexus_scheduler::schedule`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Origin of one scheduled [`Occurrence`].
 public enum OccurrenceSource has copy, drop, store {
@@ -66,40 +74,64 @@ public struct ScheduleDelta has drop {
 }
 
 /// Returns the currently advertised occurrence.
-public native fun advertised_occurrence(self: &Schedule): std::option::Option<Occurrence>;
+public fun advertised_occurrence(self: &Schedule): std::option::Option<Occurrence> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether no future occurrence exists.
-public native fun is_idle(self: &Schedule): bool;
+public fun is_idle(self: &Schedule): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether the skill dispatch quota is exhausted.
-public native fun is_exhausted(
+public fun is_exhausted(
     self: &Schedule,
     policy: nexus_interface::agent::SkillSchedulePolicy,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the number of pending standalone occurrences.
-public native fun pending_count(self: &Schedule): u64;
+public fun pending_count(self: &Schedule): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the number of dispatched occurrences.
-public native fun dispatched_count(self: &Schedule): u64;
+public fun dispatched_count(self: &Schedule): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the next occurrence identity that will be allocated.
-public native fun next_occurrence_id(self: &Schedule): u64;
+public fun next_occurrence_id(self: &Schedule): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the occurrence identity.
-public native fun occurrence_id(self: Occurrence): u64;
+public fun occurrence_id(self: Occurrence): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the requested start timestamp.
-public native fun occurrence_start_time_ms(self: Occurrence): u64;
+public fun occurrence_start_time_ms(self: Occurrence): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the optional absolute deadline.
-public native fun occurrence_deadline_ms(self: Occurrence): std::option::Option<u64>;
+public fun occurrence_deadline_ms(self: Occurrence): std::option::Option<u64> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the priority fee percentage.
-public native fun occurrence_priority_fee_percentage(self: Occurrence): u64;
+public fun occurrence_priority_fee_percentage(self: Occurrence): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the occurrence source.
-public native fun occurrence_source(self: Occurrence): OccurrenceSource;
+public fun occurrence_source(self: Occurrence): OccurrenceSource {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether an occurrence is independent of a recurrence.
-public native fun occurrence_source_is_standalone(source: OccurrenceSource): bool;
+public fun occurrence_source_is_standalone(source: OccurrenceSource): bool {
+    abort ELocalExecutionUnavailable
+}

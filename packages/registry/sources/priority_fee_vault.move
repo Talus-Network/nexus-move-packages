@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_registry::priority_fee_vault`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_registry::priority_fee_vault;
 
-//! Interface for [`nexus_registry::priority_fee_vault`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 public struct PriorityFeeVault has key {
     id: sui::object::UID,
@@ -76,28 +84,34 @@ public struct PriorityFeeVaultConfiguredEvent has copy, drop {
 }
 
 /// Transfers SUI to the [`PriorityFeeVault`] address as a deposit the vault can receive.
-public native fun create_deposit(
+public fun create_deposit(
     self: &PriorityFeeVault,
     amount: sui::balance::Balance<sui::sui::SUI>,
     leader_cap_id: sui::object::ID,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Receives and accounts for an atomic batch of deposits held at the vault address.
-public native fun collect_deposits(
+public fun collect_deposits(
     self: &mut PriorityFeeVault,
     leader_registry: &nexus_registry::leader::LeaderRegistry,
     deposits: vector<sui::transfer::Receiving<PriorityFeeDeposit>>,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun swap_us_for_sui(
+public fun swap_us_for_sui(
     self: &mut PriorityFeeVault,
     input: sui::coin::Coin<talus::us::US>,
     min_sui_out: u64,
     ctx: &mut sui::tx_context::TxContext,
-): (sui::coin::Coin<sui::sui::SUI>, sui::coin::Coin<talus::us::US>);
+): (sui::coin::Coin<sui::sui::SUI>, sui::coin::Coin<talus::us::US>) {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun withdraw_priority_fee(
+public fun withdraw_priority_fee(
     self: &mut PriorityFeeVault,
     leader_registry: &nexus_registry::leader::LeaderRegistry,
     leader_cap: &nexus_primitives::owner_cap::CloneableOwnerCap<
@@ -105,22 +119,38 @@ public native fun withdraw_priority_fee(
     >,
     share_to_withdraw: u64,
     ctx: &mut sui::tx_context::TxContext,
-): sui::coin::Coin<talus::us::US>;
+): sui::coin::Coin<talus::us::US> {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun configure(
+public fun configure(
     self: &mut PriorityFeeVault,
     owner_cap: &PriorityFeeVaultOwnerCap,
     exchange_rate_million_mists_us: u64,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun leader_account(self: &PriorityFeeVault, leader_cap_id: sui::object::ID): u64;
+public fun leader_account(self: &PriorityFeeVault, leader_cap_id: sui::object::ID): u64 {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun exchange_rate_million_mists_us(self: &PriorityFeeVault): u64;
+public fun exchange_rate_million_mists_us(self: &PriorityFeeVault): u64 {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun total_share(self: &PriorityFeeVault): u64;
+public fun total_share(self: &PriorityFeeVault): u64 {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun sui_balance(self: &PriorityFeeVault): u64;
+public fun sui_balance(self: &PriorityFeeVault): u64 {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun us_balance(self: &PriorityFeeVault): u64;
+public fun us_balance(self: &PriorityFeeVault): u64 {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun quote_swap_us_for_sui(self: &PriorityFeeVault, us_in: u64): u64;
+public fun quote_swap_us_for_sui(self: &PriorityFeeVault, us_in: u64): u64 {
+    abort ELocalExecutionUnavailable
+}

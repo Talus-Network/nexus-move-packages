@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_interface::payment`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_interface::payment;
 
-//! Interface for [`nexus_interface::payment`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Concrete payment source recorded on execution payments and scheduled reserves.
 public enum PaymentSourceKind has copy, drop, store {
@@ -250,103 +258,137 @@ public struct ExecutionRefundedEvent has copy, drop {
 ///
 /// The occurrence budget is split from the reserve. The owning Task records
 /// the relationship between the occurrence and the resulting execution.
-public native fun new_task_execution_payment(
+public fun new_task_execution_payment(
     reserve: &mut TaskPaymentReserve,
     authorization: &nexus_interface::authorization::AgentSkillAuthorization,
     execution_id: address,
     occurrence_id: u64,
     priority_fee_percentage: u64,
     ctx: &mut sui::tx_context::TxContext,
-): ExecutionPayment;
+): ExecutionPayment {
+    abort ELocalExecutionUnavailable
+}
 
 /// Records the immutable snapshotted cost for a Tool on an [`ExecutionPayment`].
 /// Aborts if the payment is already accomplished or refunded.
-public native fun snapshot_payment_tool_cost(
+public fun snapshot_payment_tool_cost(
     payment: &mut ExecutionPayment,
     tool_fqn: vector<u8>,
     cost: u64,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Consumes gas from an execution payment, reimbursing the transaction sender's address balance.
-public native fun consume_payment_for_verified_leader_submission(
+public fun consume_payment_for_verified_leader_submission(
     payment: &mut ExecutionPayment,
     amount: u64,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Consumes gas from an execution payment, reimbursing the given recipient's address balance; a no op when the amount is zero.
 /// Aborts if the payment is final or if [`amount`] exceeds available funds.
-public native fun consume_payment_for_verified_leader_submission_to_recipient(
+public fun consume_payment_for_verified_leader_submission_to_recipient(
     payment: &mut ExecutionPayment,
     amount: u64,
     recipient: address,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Consumes gas from a [`TaskPaymentReserve`] and reimburses the transaction sender.
 ///
 /// Authorization is exactly mutable access to [`TaskPaymentReserve`].
 /// The caller cannot select another reimbursement address.
 /// Does nothing when the amount is zero.
-public native fun consume_task_payment_reserve_for_sender(
+public fun consume_task_payment_reserve_for_sender(
     reserve: &mut TaskPaymentReserve,
     amount: u64,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Adds coin funds to an execution payment, increasing its max budget, and returns the refill amount.
 /// Aborts if the coin value is zero, or if the payment is already accomplished or refunded.
-public native fun refill_execution_payment_from_coin(
+public fun refill_execution_payment_from_coin(
     payment: &mut ExecutionPayment,
     coin: sui::coin::Coin<sui::sui::SUI>,
-): u64;
+): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates canonical policy input for one workflow [Invocation].
-public native fun new_invocation_request(
+public fun new_invocation_request(
     payment: &ExecutionPayment,
     vertex_key: vector<u8>,
     tool_id: sui::object::ID,
     tool_fqn: vector<u8>,
     cashier_id: sui::object::ID,
     clock: &sui::clock::Clock,
-): InvocationRequest;
+): InvocationRequest {
+    abort ELocalExecutionUnavailable
+}
 
 /// Records one exact Invocation obligation and returns its placement authority.
-public native fun lock_invocation(
+public fun lock_invocation(
     payment: &mut ExecutionPayment,
     vertex_key: vector<u8>,
     invocation_id: sui::object::ID,
     amount: u64,
-): InvocationLockReceipt;
+): InvocationLockReceipt {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the execution recorded by [InvocationRequest].
-public native fun invocation_request_execution_id(request: &InvocationRequest): address;
+public fun invocation_request_execution_id(request: &InvocationRequest): address {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the runtime vertex key recorded by [InvocationRequest].
-public native fun invocation_request_vertex_key(request: &InvocationRequest): vector<u8>;
+public fun invocation_request_vertex_key(request: &InvocationRequest): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the Tool recorded by [InvocationRequest].
-public native fun invocation_request_tool_id(request: &InvocationRequest): sui::object::ID;
+public fun invocation_request_tool_id(request: &InvocationRequest): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the Tool name recorded by [InvocationRequest].
-public native fun invocation_request_tool_fqn(request: &InvocationRequest): vector<u8>;
+public fun invocation_request_tool_fqn(request: &InvocationRequest): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the cashier recorded by [InvocationRequest].
-public native fun invocation_request_cashier_id(request: &InvocationRequest): sui::object::ID;
+public fun invocation_request_cashier_id(request: &InvocationRequest): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the payment recorded by [InvocationRequest].
-public native fun invocation_request_payment_id(request: &InvocationRequest): sui::object::ID;
+public fun invocation_request_payment_id(request: &InvocationRequest): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the payment source recorded by [InvocationRequest].
-public native fun invocation_request_source(request: &InvocationRequest): PaymentSourceKind;
+public fun invocation_request_source(request: &InvocationRequest): PaymentSourceKind {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the snapshotted Tool price recorded by [InvocationRequest].
-public native fun invocation_request_price_snapshot(request: &InvocationRequest): u64;
+public fun invocation_request_price_snapshot(request: &InvocationRequest): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the authorization time recorded by [InvocationRequest].
-public native fun invocation_request_authorized_at_ms(request: &InvocationRequest): u64;
+public fun invocation_request_authorized_at_ms(request: &InvocationRequest): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Consumes [InvocationRequest] and returns its canonical fields.
-public native fun into_invocation_request(
+public fun into_invocation_request(
     request: InvocationRequest,
 ): (
     address,
@@ -358,290 +400,414 @@ public native fun into_invocation_request(
     PaymentSourceKind,
     u64,
     u64,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Consumes [InvocationLockReceipt] and returns the exact placement fields.
-public native fun into_invocation_lock_receipt(
+public fun into_invocation_lock_receipt(
     receipt: InvocationLockReceipt,
-): (vector<u8>, sui::object::ID, u64);
+): (vector<u8>, sui::object::ID, u64) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Resolves one exact Invocation obligation.
 ///
 /// A finalized obligation withdraws the amount recorded by its lock. A
 /// refunded obligation only removes the lock and leaves all funds available.
-public native fun settle_invocation(
+public fun settle_invocation(
     payment: &mut ExecutionPayment,
     vertex_key: vector<u8>,
     invocation_id: sui::object::ID,
     was_refunded: bool,
-): (sui::balance::Balance<sui::sui::SUI>, InvocationSettlementReceipt);
+): (sui::balance::Balance<sui::sui::SUI>, InvocationSettlementReceipt) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Consumes [InvocationSettlementReceipt] and returns its exact fields.
-public native fun into_invocation_settlement_receipt(
+public fun into_invocation_settlement_receipt(
     receipt: InvocationSettlementReceipt,
-): (sui::object::ID, bool);
+): (sui::object::ID, bool) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the base leader gas consumed by the payment, excluding paid tool fees and priority.
-public native fun payment_leader_gas_consumed(payment: &ExecutionPayment): u64;
+public fun payment_leader_gas_consumed(payment: &ExecutionPayment): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the cumulative priority charge due for the payment's consumed leader gas.
-public native fun priority_charge_for(payment: &ExecutionPayment): u64;
+public fun priority_charge_for(payment: &ExecutionPayment): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the priority delta due after adding a settlement's valid payable leader gas.
-public native fun settlement_priority_delta_for_leader_gas(
+public fun settlement_priority_delta_for_leader_gas(
     payment: &ExecutionPayment,
     payable_leader_gas: u64,
-): u64;
+): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the base leader gas plus priority delta required for a committed result settlement.
-public native fun settlement_charge_required(
-    payment: &ExecutionPayment,
-    payable_leader_gas: u64,
-): u64;
+public fun settlement_charge_required(payment: &ExecutionPayment, payable_leader_gas: u64): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns spendable payment funds for settlement after preserving locked tool payments.
-public native fun payment_available_settlement_funds(payment: &ExecutionPayment): u64;
+public fun payment_available_settlement_funds(payment: &ExecutionPayment): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the amount currently available for a settlement requiring the given leader gas.
-public native fun payment_available_settlement_charge(
+public fun payment_available_settlement_charge(
     payment: &ExecutionPayment,
     payable_leader_gas: u64,
-): u64;
+): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the missing amount for a committed result settlement, or zero when payable.
-public native fun settlement_charge_missing(
-    payment: &ExecutionPayment,
-    payable_leader_gas: u64,
-): u64;
+public fun settlement_charge_missing(payment: &ExecutionPayment, payable_leader_gas: u64): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Records and splits a committed result settlement's priority delta.
-public native fun consume_priority_fee_for_settlement(
+public fun consume_priority_fee_for_settlement(
     payment: &mut ExecutionPayment,
     priority_delta: u64,
-): sui::balance::Balance<sui::sui::SUI>;
+): sui::balance::Balance<sui::sui::SUI> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether [payment] contains an obligation for [vertex_key].
-public native fun invocation_locked(payment: &ExecutionPayment, vertex_key: vector<u8>): bool;
+public fun invocation_locked(payment: &ExecutionPayment, vertex_key: vector<u8>): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the exact [Invocation] locked for [vertex_key], if one exists.
-public native fun locked_invocation_id(
+public fun locked_invocation_id(
     payment: &ExecutionPayment,
     vertex_key: vector<u8>,
-): std::option::Option<sui::object::ID>;
+): std::option::Option<sui::object::ID> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Marks a user funded payment accomplished and returns any remaining funds to the funding user; a no op if already accomplished.
 /// Aborts if the payment still has locked vertices, if its source is not user funded, or if it is already refunded.
-public native fun accomplish_invoker_payment(
+public fun accomplish_invoker_payment(
     payment: &mut ExecutionPayment,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Marks a user funded payment refunded and returns all remaining funds to the funding user; a no op if already refunded.
 /// Aborts if the payment still has locked vertices, if its source is not user funded, or if it is already accomplished.
-public native fun refund_invoker_payment(
+public fun refund_invoker_payment(
     payment: &mut ExecutionPayment,
     refund_reason: vector<u8>,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Constructs a user funded payment source for the given user address.
-public native fun payment_source_kind_user_funded(user: address): PaymentSourceKind;
+public fun payment_source_kind_user_funded(user: address): PaymentSourceKind {
+    abort ELocalExecutionUnavailable
+}
 
 /// Constructs an agent funded payment source for the given agent.
-public native fun payment_source_kind_agent_funded(agent_id: sui::object::ID): PaymentSourceKind;
+public fun payment_source_kind_agent_funded(agent_id: sui::object::ID): PaymentSourceKind {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether the payment source is user funded.
-public native fun payment_source_kind_is_user_funded(source: &PaymentSourceKind): bool;
+public fun payment_source_kind_is_user_funded(source: &PaymentSourceKind): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether the payment source is agent funded.
-public native fun payment_source_kind_is_agent_funded(source: &PaymentSourceKind): bool;
+public fun payment_source_kind_is_agent_funded(source: &PaymentSourceKind): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the funding user address of a user funded payment source.
 /// Aborts if the source is agent funded.
-public native fun payment_source_kind_user(source: &PaymentSourceKind): address;
+public fun payment_source_kind_user(source: &PaymentSourceKind): address {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the agent id of an agent funded payment source.
 /// Aborts if the source is user funded.
-public native fun payment_source_kind_agent_id(source: &PaymentSourceKind): sui::object::ID;
+public fun payment_source_kind_agent_id(source: &PaymentSourceKind): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the pending execution payment final state.
-public native fun payment_final_state_pending(): ExecutionPaymentFinalState;
+public fun payment_final_state_pending(): ExecutionPaymentFinalState {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the accomplished execution payment final state.
-public native fun payment_final_state_accomplished(): ExecutionPaymentFinalState;
+public fun payment_final_state_accomplished(): ExecutionPaymentFinalState {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the refunded execution payment final state.
-public native fun payment_final_state_refunded(): ExecutionPaymentFinalState;
+public fun payment_final_state_refunded(): ExecutionPaymentFinalState {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the user funded skill payment policy.
-public native fun payment_policy_user_funded(): SkillPaymentPolicy;
+public fun payment_policy_user_funded(): SkillPaymentPolicy {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns an agent funded skill payment policy with the given maximum budget.
 /// Aborts if the maximum budget is zero.
-public native fun payment_policy_agent_funded(max_budget_mist: u64): SkillPaymentPolicy;
+public fun payment_policy_agent_funded(max_budget_mist: u64): SkillPaymentPolicy {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether the skill payment policy is agent funded.
-public native fun payment_policy_is_agent_funded(policy: SkillPaymentPolicy): bool;
+public fun payment_policy_is_agent_funded(policy: SkillPaymentPolicy): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the maximum budget of the payment policy, or zero for a user funded policy.
-public native fun payment_policy_max_budget_mist(policy: SkillPaymentPolicy): u64;
+public fun payment_policy_max_budget_mist(policy: SkillPaymentPolicy): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Asserts that a payment source and budget satisfy the skill payment policy for the given agent.
 /// Aborts if a user funded policy is not user funded, if an agent funded budget is zero or exceeds the policy maximum, or if the agent funded source's agent does not match.
-public native fun assert_payment_policy(
+public fun assert_payment_policy(
     agent_id: sui::object::ID,
     policy: SkillPaymentPolicy,
     source: &PaymentSourceKind,
     max_budget_mist: u64,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the agent id owning the execution payment.
-public native fun payment_agent_id(payment: &ExecutionPayment): sui::object::ID;
+public fun payment_agent_id(payment: &ExecutionPayment): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the skill id of the execution payment.
-public native fun payment_skill_id(payment: &ExecutionPayment): u64;
+public fun payment_skill_id(payment: &ExecutionPayment): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the interface revision the execution payment was created under.
-public native fun payment_interface_revision(
+public fun payment_interface_revision(
     payment: &ExecutionPayment,
-): nexus_interface::version::InterfaceVersion;
+): nexus_interface::version::InterfaceVersion {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the execution id the payment funds.
-public native fun payment_execution_id(payment: &ExecutionPayment): address;
+public fun payment_execution_id(payment: &ExecutionPayment): address {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the total amount consumed from the execution payment so far.
-public native fun payment_consumed(payment: &ExecutionPayment): u64;
+public fun payment_consumed(payment: &ExecutionPayment): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the current balance of funds held by the execution payment.
-public native fun payment_funds(payment: &ExecutionPayment): u64;
+public fun payment_funds(payment: &ExecutionPayment): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the funding source of the execution payment.
-public native fun payment_source_kind(payment: &ExecutionPayment): PaymentSourceKind;
+public fun payment_source_kind(payment: &ExecutionPayment): PaymentSourceKind {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the MIST budget locked by the execution payment, including refills.
-public native fun payment_locked_budget_mist(payment: &ExecutionPayment): u64;
+public fun payment_locked_budget_mist(payment: &ExecutionPayment): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the execution payment's lifecycle final state.
-public native fun payment_final_state(payment: &ExecutionPayment): ExecutionPaymentFinalState;
+public fun payment_final_state(payment: &ExecutionPayment): ExecutionPaymentFinalState {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the execution payment's total gas plus priority ceiling in MIST.
-public native fun payment_max_budget_mist(payment: &ExecutionPayment): u64;
+public fun payment_max_budget_mist(payment: &ExecutionPayment): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the maximal transaction gas and Tool invocation budget in MIST.
-public native fun payment_gas_budget_mist(payment: &ExecutionPayment): u64;
+public fun payment_gas_budget_mist(payment: &ExecutionPayment): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the priority fee reserve in MIST derived from the total ceiling.
-public native fun payment_priority_fee_reserve_mist(payment: &ExecutionPayment): u64;
+public fun payment_priority_fee_reserve_mist(payment: &ExecutionPayment): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the priority fee percentage stored on the execution payment.
-public native fun payment_priority_fee_percentage(payment: &ExecutionPayment): u64;
+public fun payment_priority_fee_percentage(payment: &ExecutionPayment): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the priority fee charged during terminal settlement.
-public native fun payment_priority_fee_charged(payment: &ExecutionPayment): u64;
+public fun payment_priority_fee_charged(payment: &ExecutionPayment): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether the execution payment has been accomplished.
-public native fun payment_accomplished(payment: &ExecutionPayment): bool;
+public fun payment_accomplished(payment: &ExecutionPayment): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether the execution payment has been refunded.
-public native fun payment_refunded(payment: &ExecutionPayment): bool;
+public fun payment_refunded(payment: &ExecutionPayment): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the number of currently locked vertices on the execution payment.
-public native fun payment_locks(payment: &ExecutionPayment): u64;
+public fun payment_locks(payment: &ExecutionPayment): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the base execution funds still available to spend in MIST.
-public native fun payment_available_funds(payment: &ExecutionPayment): u64;
+public fun payment_available_funds(payment: &ExecutionPayment): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether available funds can cover a vertex amount.
-public native fun can_lock_payment_vertex_with_amount(
-    payment: &ExecutionPayment,
-    amount: u64,
-): bool;
+public fun can_lock_payment_vertex_with_amount(payment: &ExecutionPayment, amount: u64): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether an [`ExecutionPayment`] has frozen the supplied Tool price.
-public native fun has_payment_tool_cost_snapshot(
-    payment: &ExecutionPayment,
-    tool_fqn: &vector<u8>,
-): bool;
+public fun has_payment_tool_cost_snapshot(payment: &ExecutionPayment, tool_fqn: &vector<u8>): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the snapshotted cost for the given tool on the execution payment.
 /// Aborts if no cost snapshot exists for the tool.
-public native fun payment_tool_cost(payment: &ExecutionPayment, tool_fqn: vector<u8>): u64;
+public fun payment_tool_cost(payment: &ExecutionPayment, tool_fqn: vector<u8>): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the Task that owns the reserve.
-public native fun task_payment_reserve_task_id(self: &TaskPaymentReserve): sui::object::ID;
+public fun task_payment_reserve_task_id(self: &TaskPaymentReserve): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the agent id of the reserve.
-public native fun task_payment_reserve_agent_id(self: &TaskPaymentReserve): sui::object::ID;
+public fun task_payment_reserve_agent_id(self: &TaskPaymentReserve): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the skill id of the reserve.
-public native fun task_payment_reserve_skill_id(self: &TaskPaymentReserve): u64;
+public fun task_payment_reserve_skill_id(self: &TaskPaymentReserve): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the interface version of the reserve.
-public native fun task_payment_reserve_interface_version(
+public fun task_payment_reserve_interface_version(
     self: &TaskPaymentReserve,
-): nexus_interface::version::InterfaceVersion;
+): nexus_interface::version::InterfaceVersion {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the id of the agent skill authorization bound to the reserve.
-public native fun task_payment_reserve_authorization_id(self: &TaskPaymentReserve): sui::object::ID;
+public fun task_payment_reserve_authorization_id(self: &TaskPaymentReserve): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the per occurrence budget of the reserve.
-public native fun task_payment_reserve_occurrence_budget_mist(self: &TaskPaymentReserve): u64;
+public fun task_payment_reserve_occurrence_budget_mist(self: &TaskPaymentReserve): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the remaining funds held by the reserve.
-public native fun task_payment_reserve_remaining_funds(self: &TaskPaymentReserve): u64;
+public fun task_payment_reserve_remaining_funds(self: &TaskPaymentReserve): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the funding source of the reserve.
-public native fun task_payment_reserve_source_kind(self: &TaskPaymentReserve): PaymentSourceKind;
+public fun task_payment_reserve_source_kind(self: &TaskPaymentReserve): PaymentSourceKind {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the skill payment policy of the reserve.
-public native fun task_payment_reserve_payment_policy(
-    self: &TaskPaymentReserve,
-): SkillPaymentPolicy;
+public fun task_payment_reserve_payment_policy(self: &TaskPaymentReserve): SkillPaymentPolicy {
+    abort ELocalExecutionUnavailable
+}
 
 /// Adds user funds to a [`TaskPaymentReserve`].
-public native fun refill_task_payment_reserve_address_funded(
+public fun refill_task_payment_reserve_address_funded(
     reserve: &mut TaskPaymentReserve,
     coin: sui::coin::Coin<sui::sui::SUI>,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns all user funds held by a [`TaskPaymentReserve`].
-public native fun cancel_task_payment_reserve_address_funded(
+public fun cancel_task_payment_reserve_address_funded(
     reserve: &mut TaskPaymentReserve,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Accomplishes one Task execution and restores its unused funds.
-public native fun accomplish_task_execution_payment(
+public fun accomplish_task_execution_payment(
     reserve: &mut TaskPaymentReserve,
     payment: &mut ExecutionPayment,
     occurrence_id: u64,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Refunds one Task execution and restores its unused funds.
-public native fun refund_task_execution_payment(
+public fun refund_task_execution_payment(
     reserve: &mut TaskPaymentReserve,
     payment: &mut ExecutionPayment,
     occurrence_id: u64,
     refund_reason: vector<u8>,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Normalizes an optional priority fee percentage to the effective on chain value.
-public native fun priority_fee_percentage(priority_fee_percentage: std::option::Option<u64>): u64;
+public fun priority_fee_percentage(priority_fee_percentage: std::option::Option<u64>): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Computes the priority fee in MIST as `floor(gas_budget_mist * priority_fee_percentage / 100)`.
-public native fun priority_fee_mist_for_gas_budget(
+public fun priority_fee_mist_for_gas_budget(
     gas_budget_mist: u64,
     priority_fee_percentage: u64,
-): u64;
+): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Computes the maximal base gas budget and its priority reserve for a total MIST ceiling.
-public native fun budget_split_mist(max_budget_mist: u64, priority_fee_percentage: u64): (u64, u64);
+public fun budget_split_mist(max_budget_mist: u64, priority_fee_percentage: u64): (u64, u64) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Computes the largest base gas budget that fits within a total MIST ceiling.
-public native fun gas_budget_mist_for_max_budget_mist(
+public fun gas_budget_mist_for_max_budget_mist(
     max_budget_mist: u64,
     priority_fee_percentage: u64,
-): u64;
+): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Destroys a [`TaskPaymentReserve`] after all funds were returned.
-public native fun destroy_empty_task_payment_reserve(reserve: TaskPaymentReserve);
+public fun destroy_empty_task_payment_reserve(reserve: TaskPaymentReserve) {
+    abort ELocalExecutionUnavailable
+}

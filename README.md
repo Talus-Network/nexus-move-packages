@@ -7,13 +7,14 @@ composition. Calls resolve to the packages published on Sui. These interface
 packages are dependencies only and must not be published.
 
 > These packages provide interfaces for compiling against the published Nexus
-> packages. Local Move tests may test application logic that does not invoke
-> Nexus. Tests executing Nexus functions require the Testnet deployment. Local
-> executable mocks are planned for a later release.
+> packages. Local Move tests can load the interfaces and add test extensions
+> that construct and inspect Nexus values. A call to an existing Nexus function
+> aborts locally. Use Testnet when a test must execute published Nexus behavior.
 
-The `public native fun` declarations intentionally have no local
-implementation. They support compilation, but a local Move test cannot execute
-them.
+Every interface function has an ordinary Move body that aborts with a clear
+local execution error. The body is not a Nexus implementation. It allows the
+Move test runner to load dependency modules while preserving an explicit
+failure when a test crosses the Nexus boundary.
 
 ## MVR dependencies
 
@@ -43,6 +44,73 @@ records its Testnet and Mainnet deployment.
 
 Local Move tests may cover application logic that does not call Nexus. Tests
 that execute Nexus functions must run against the Testnet deployment.
+
+## Local Move tests
+
+Module extensions let test code construct and inspect Nexus values without
+adding public test helpers to an application module. An extension shares the
+target module scope, so it can access fields and variants that application code
+cannot access directly. Extensions are additive. An extension cannot replace
+an existing Nexus function, and it does not reproduce published Nexus behavior.
+
+Module extensions currently require the alpha form of the Move 2024 edition.
+Set this edition in the consumer package:
+
+```toml
+[package]
+edition = "2024.alpha"
+```
+
+Place an extension in the consumer package test directory. The
+`#[test_only]` attribute keeps its helpers out of production bytecode:
+
+```move
+#[test_only]
+extend module nexus_primitives::data;
+
+/// Creates an inline [NexusValue] wrapped in one [NexusData] value.
+///
+/// This helper constructs the value directly because [inline_data_value] and
+/// [one] represent published Nexus behavior and abort during local execution.
+public fun inline_for_testing(bytes: vector<u8>): NexusData {
+    NexusData::One {
+        value: NexusValue::InlineData { bytes },
+    }
+}
+
+/// Returns the byte length of an inline [NexusValue] wrapped in one
+/// [NexusData] value.
+///
+/// Returns zero for every other [NexusData] shape.
+public fun inline_length_for_testing(self: &NexusData): u64 {
+    match (self) {
+        NexusData::One {
+            value: NexusValue::InlineData { bytes },
+        } => bytes.length(),
+        _ => 0,
+    }
+}
+```
+
+A test calls these helpers through the module it extends:
+
+```move
+let value = data::inline_for_testing(b"hello");
+assert_eq!(value.inline_length_for_testing(), 5);
+```
+
+Run consumer tests with the network build environment used to resolve the MVR
+dependency:
+
+```sh
+sui move test --build-env testnet
+```
+
+Use extensions for the Nexus values and observations that application logic
+needs. Keep calls to existing Nexus functions at a small application boundary,
+then use Testnet to test that boundary against published behavior. See the
+[local testing example](examples/local_testing) for an executable consumer
+package.
 
 ## Workflow interface
 

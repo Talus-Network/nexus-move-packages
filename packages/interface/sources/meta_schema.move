@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_interface::meta_schema`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_interface::meta_schema;
 
-//! Interface for [`nexus_interface::meta_schema`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Execution relevant class of one typed value.
 public enum ValueKind has copy, drop, store {
@@ -47,98 +55,139 @@ public struct PortInputCommitment has copy, drop, store {
     commitment: PortCommitment,
 }
 
-public native fun value_kind_object(): ValueKind;
+public fun value_kind_object(): ValueKind {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun value_kind_data(): ValueKind;
+public fun value_kind_data(): ValueKind {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun port_schema(
-    port_name: vector<u8>,
-    is_many: bool,
-    value_kind: ValueKind,
-): PortSchema;
+public fun port_schema(port_name: vector<u8>, is_many: bool, value_kind: ValueKind): PortSchema {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun output_variant_schema(
+public fun output_variant_schema(
     variant_name: vector<u8>,
     ports: vector<PortSchema>,
-): OutputVariantSchema;
+): OutputVariantSchema {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun new(
+public fun new(
     input_ports: vector<PortSchema>,
     output_variants: vector<OutputVariantSchema>,
-): MetaSchema;
+): MetaSchema {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun assert_valid_for_tool(self: &MetaSchema, is_offchain: bool);
+public fun assert_valid_for_tool(self: &MetaSchema, is_offchain: bool) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Checks whether the One/Many variant matches the schema cardinality.
-public native fun conforms_input_cardinality(
+public fun conforms_input_cardinality(
     schema: &PortSchema,
     value: &nexus_primitives::data::NexusData,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Validates untrusted typed values against one port schema and constructs canonical data.
-public native fun store_input(
+public fun store_input(
     schema: &PortSchema,
     values: vector<nexus_primitives::data::NexusValue>,
-): nexus_primitives::data::NexusData;
+): nexus_primitives::data::NexusData {
+    abort ELocalExecutionUnavailable
+}
 
 /// Checks canonical cardinality and semantic kind directly from stored values.
-public native fun conforms_input_port(
+public fun conforms_input_port(
     schema: &PortSchema,
     value: &nexus_primitives::data::NexusData,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Checks complete canonical inputs in immutable schema order.
-public native fun conforms_complete_input(
+public fun conforms_complete_input(
     self: &MetaSchema,
     values: &vector<nexus_primitives::data::NexusData>,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Checks an exact ordered canonical output envelope.
-public native fun conforms_raw_output(
+public fun conforms_raw_output(
     self: &MetaSchema,
     output: &nexus_primitives::tagged_output::TaggedOutput,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Builds the canonical schema mismatch output through the typed active builder.
-public native fun canonical_schema_mismatch_failure(): nexus_primitives::tagged_output::TaggedOutput;
+public fun canonical_schema_mismatch_failure(): nexus_primitives::tagged_output::TaggedOutput {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun port_commitment_one(value: &nexus_primitives::data::NexusValue): PortCommitment;
+public fun port_commitment_one(value: &nexus_primitives::data::NexusValue): PortCommitment {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun port_commitment_many(
+public fun port_commitment_many(
     values: &vector<nexus_primitives::data::NexusValue>,
-): PortCommitment;
+): PortCommitment {
+    abort ELocalExecutionUnavailable
+}
 
 /// Hashes canonical schema ordered name/commitment pairs shared by Nexus and on chain Tools.
-public native fun input_hash(
+public fun input_hash(
     port_names: vector<vector<u8>>,
     commitments: vector<PortCommitment>,
-): vector<u8>;
+): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Validates complete persisted canonical inputs and derives the shared input hash.
-public native fun input_hash_for_stored(
+public fun input_hash_for_stored(
     self: &MetaSchema,
     values: &vector<nexus_primitives::data::NexusData>,
-): vector<u8>;
+): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun input_ports(self: &MetaSchema): &vector<PortSchema>;
+public fun input_ports(self: &MetaSchema): &vector<PortSchema> {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun port_name(self: &PortSchema): &vector<u8>;
+public fun port_name(self: &PortSchema): &vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun port_is_many(self: &PortSchema): bool;
+public fun port_is_many(self: &PortSchema): bool {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun find_input_port(
-    self: &MetaSchema,
-    name: &vector<u8>,
-): std::option::Option<PortSchema>;
+public fun find_input_port(self: &MetaSchema, name: &vector<u8>): std::option::Option<PortSchema> {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun find_variant_port(
+public fun find_variant_port(
     self: &MetaSchema,
     variant_name: &vector<u8>,
     port_name: &vector<u8>,
-): std::option::Option<PortSchema>;
+): std::option::Option<PortSchema> {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun value_kinds_compatible(from: &PortSchema, to: &PortSchema): bool;
+public fun value_kinds_compatible(from: &PortSchema, to: &PortSchema): bool {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun failure_variant(): vector<u8>;
+public fun failure_variant(): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun failure_port(): vector<u8>;
+public fun failure_port(): vector<u8> {
+    abort ELocalExecutionUnavailable
+}

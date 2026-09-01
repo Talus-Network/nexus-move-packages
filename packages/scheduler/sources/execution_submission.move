@@ -1,11 +1,19 @@
+/// Interface for the published [`nexus_scheduler::execution_submission`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_scheduler::execution_submission;
 
-//! Interface for [`nexus_scheduler::execution_submission`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Commits one verified offchain Tool result through the current runtime.
-public native fun commit_off_chain_tool_result_for_walk(
+public fun commit_off_chain_tool_result_for_walk(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     dag: &nexus_interface::dag::DAG,
     execution: &mut nexus_workflow::execution::DAGExecution,
@@ -21,10 +29,12 @@ public native fun commit_off_chain_tool_result_for_walk(
     walk_index: u64,
     expected_vertex: nexus_interface::graph::RuntimeVertex,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Prepares the authenticated worksheet for one Tool result submission.
-public native fun prepare_tool_result_submission_worksheet(
+public fun prepare_tool_result_submission_worksheet(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     dag: &nexus_interface::dag::DAG,
     agent_registry: &nexus_registry::agent_registry::AgentRegistry,
@@ -41,10 +51,12 @@ public native fun prepare_tool_result_submission_worksheet(
 ): (
     nexus_primitives::proof_of_uid::ProofOfUID,
     nexus_interface::authorization::AgentVertexAuthorizationStamp,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Releases the authorization grant bound to one onchain Tool walk.
-public native fun release_vertex_authorization_for_onchain_walk(
+public fun release_vertex_authorization_for_onchain_walk(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     dag: &nexus_interface::dag::DAG,
     execution: &mut nexus_workflow::execution::DAGExecution,
@@ -56,10 +68,12 @@ public native fun release_vertex_authorization_for_onchain_walk(
     walk_index: u64,
 ): nexus_primitives::authorization::ProvenValue<
     nexus_interface::authorization::AgentVertexAuthorization,
->;
+> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates the result object and requirements for one onchain Tool walk.
-public native fun create_on_chain_tool_result_for_walk(
+public fun create_on_chain_tool_result_for_walk(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     dag: &nexus_interface::dag::DAG,
     execution: &mut nexus_workflow::execution::DAGExecution,
@@ -76,10 +90,12 @@ public native fun create_on_chain_tool_result_for_walk(
 ): (
     nexus_primitives::proof_of_uid::UIDRequirements,
     nexus_interface::onchain_tool_result::OnchainToolResult,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Consumes and settles one finalized onchain Tool result through the current runtime.
-public native fun consume_on_chain_tool_result_for_walk(
+public fun consume_on_chain_tool_result_for_walk(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     dag: &nexus_interface::dag::DAG,
     execution: &mut nexus_workflow::execution::DAGExecution,
@@ -97,4 +113,6 @@ public native fun consume_on_chain_tool_result_for_walk(
     settlement_gas_charge: u64,
     clock: &sui::clock::Clock,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}

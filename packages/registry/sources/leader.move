@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_registry::leader`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_registry::leader;
 
-//! Interface for [`nexus_registry::leader`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Leader liveness/eligibility status.
 public enum LeaderStatus has copy, drop, store {
@@ -216,140 +224,196 @@ public struct StakeSlashedEvent has copy, drop {
 }
 
 /// Returns the registry's unbonding delay (in milliseconds) for stake withdrawals.
-public native fun unbonding_duration_ms(self: &LeaderRegistry): u64;
+public fun unbonding_duration_ms(self: &LeaderRegistry): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the minimum stake (in US base units) a leader needs to be eligible for ranking.
-public native fun min_stake_us(self: &LeaderRegistry): u64;
+public fun min_stake_us(self: &LeaderRegistry): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the maximum budget (in MIST) a leader may spend on a single transaction.
-public native fun max_transaction_budget(self: &LeaderRegistry): u64;
+public fun max_transaction_budget(self: &LeaderRegistry): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Verifies that one reimbursed transaction respects the [`LeaderRegistry`] gas ceiling.
-public native fun assert_transaction_budget(self: &LeaderRegistry, gas_charge: u64);
+public fun assert_transaction_budget(self: &LeaderRegistry, gas_charge: u64) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the network ID shared by all leader capabilities issued by this registry.
-public native fun network_id(self: &LeaderRegistry): sui::object::ID;
+public fun network_id(self: &LeaderRegistry): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Anyone can query the expected stamp ID (for tool configuration).
 /// This is the same as the registry's object ID.
-public native fun leader_stamp_id(self: &LeaderRegistry): sui::object::ID;
+public fun leader_stamp_id(self: &LeaderRegistry): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the `Active` leader status value.
-public native fun status_active(): LeaderStatus;
+public fun status_active(): LeaderStatus {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the `Suspended` leader status value.
-public native fun status_suspended(): LeaderStatus;
+public fun status_suspended(): LeaderStatus {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the `Slashed` leader status value.
-public native fun status_slashed(): LeaderStatus;
+public fun status_slashed(): LeaderStatus {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates a metadata container from pre defined key/value pairs.
-public native fun new_metadata(
+public fun new_metadata(
     data: sui::vec_map::VecMap<std::string::String, std::string::String>,
-): Metadata;
+): Metadata {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns an empty metadata container.
-public native fun empty_metadata(): Metadata;
+public fun empty_metadata(): Metadata {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether a leader record exists for the given capability ID.
-public native fun exists(self: &LeaderRegistry, leader_cap_id: sui::object::ID): bool;
+public fun exists(self: &LeaderRegistry, leader_cap_id: sui::object::ID): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Aborts with [ELeaderNotRegistered] unless a record exists for the capability ID.
-public native fun assert_registered(self: &LeaderRegistry, leader_cap_id: sui::object::ID);
+public fun assert_registered(self: &LeaderRegistry, leader_cap_id: sui::object::ID) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Aborts when any execution input references an issued LeaderCap.
-public native fun assert_execution_inputs_allowed(
+public fun assert_execution_inputs_allowed(
     self: &LeaderRegistry,
     operation: &nexus_interface::agent::ExecutionSpec,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Aborts when any explicit output Object field references an issued LeaderCap.
-public native fun assert_output_objects_allowed(
+public fun assert_output_objects_allowed(
     self: &LeaderRegistry,
     output: &sui::vec_map::VecMap<
         nexus_interface::graph::OutputPort,
         nexus_primitives::data::NexusData,
     >,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the current status of a leader record.
 ///
 /// Aborts with [ELeaderNotFound] if the leader has no record.
-public native fun status(self: &LeaderRegistry, leader_cap_id: sui::object::ID): LeaderStatus;
+public fun status(self: &LeaderRegistry, leader_cap_id: sui::object::ID): LeaderStatus {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the current ownership claim token for a leader record.
 ///
 /// Aborts with [ELeaderNotFound] if the leader has no record.
-public native fun claim_token(self: &LeaderRegistry, leader_cap_id: sui::object::ID): vector<u8>;
+public fun claim_token(self: &LeaderRegistry, leader_cap_id: sui::object::ID): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether a leader record exists and has status `Active`.
-public native fun is_active(self: &LeaderRegistry, leader_cap_id: sui::object::ID): bool;
+public fun is_active(self: &LeaderRegistry, leader_cap_id: sui::object::ID): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether a leader is active and sufficiently staked.
-public native fun is_eligible(self: &LeaderRegistry, leader_cap_id: sui::object::ID): bool;
+public fun is_eligible(self: &LeaderRegistry, leader_cap_id: sui::object::ID): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Asserts that a leader is active.
 ///
 /// Aborts with [ELeaderNotActive] if the leader is missing or not active.
-public native fun assert_active(self: &LeaderRegistry, leader_cap_id: sui::object::ID);
+public fun assert_active(self: &LeaderRegistry, leader_cap_id: sui::object::ID) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the metadata for a leader record.
 ///
 /// Aborts with [ELeaderNotFound] if the leader has not registered a record.
-public native fun metadata(self: &LeaderRegistry, leader_cap_id: sui::object::ID): &Metadata;
+public fun metadata(self: &LeaderRegistry, leader_cap_id: sui::object::ID): &Metadata {
+    abort ELocalExecutionUnavailable
+}
 
 /// Convenience getter for the underlying key/value map inside [Metadata].
-public native fun metadata_data(
+public fun metadata_data(
     self: &Metadata,
-): &sui::vec_map::VecMap<std::string::String, std::string::String>;
+): &sui::vec_map::VecMap<std::string::String, std::string::String> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the total pooled stake (in US base units) backing a leader.
 ///
 /// Aborts with [ELeaderNotFound] if the leader has no record.
-public native fun leader_pool_total(self: &LeaderRegistry, leader_cap_id: sui::object::ID): u64;
+public fun leader_pool_total(self: &LeaderRegistry, leader_cap_id: sui::object::ID): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the total stake shares outstanding for a leader.
 ///
 /// Aborts with [ELeaderNotFound] if the leader has no record.
-public native fun leader_total_shares(self: &LeaderRegistry, leader_cap_id: sui::object::ID): u64;
+public fun leader_total_shares(self: &LeaderRegistry, leader_cap_id: sui::object::ID): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns a staker's active (non pending) shares in a leader pool, or 0 if none.
 ///
 /// Aborts with [ELeaderNotFound] if the leader has no record.
-public native fun staker_active_shares(
+public fun staker_active_shares(
     self: &LeaderRegistry,
     leader_cap_id: sui::object::ID,
     staker: address,
-): u64;
+): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns a staker's pending (unstake locked) shares in a leader pool, or 0 if none.
 ///
 /// Aborts with [ELeaderNotFound] if the leader has no record.
-public native fun staker_pending_shares(
+public fun staker_pending_shares(
     self: &LeaderRegistry,
     leader_cap_id: sui::object::ID,
     staker: address,
-): u64;
+): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns a staker's total (active plus pending) shares in a leader pool.
 ///
 /// Aborts with [ELeaderNotFound] if the leader has no record.
-public native fun staker_total_shares(
+public fun staker_total_shares(
     self: &LeaderRegistry,
     leader_cap_id: sui::object::ID,
     staker: address,
-): u64;
+): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Current stake value (in US base units) for a staker in the given leader pool.
 ///
 /// Returns 0 if either:
 /// - the leader has no shares, or
 /// - the staker has no shares.
-public native fun staker_value(
+public fun staker_value(
     self: &LeaderRegistry,
     leader_cap_id: sui::object::ID,
     staker: address,
-): u64;
+): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Upsert the sender's leader record.
 ///
@@ -360,81 +424,97 @@ public native fun staker_value(
 /// - `leader_cap` must belong to this registry network.
 /// - Updates metadata for an existing record when called by the holder of the leader cap.
 /// - Enforces a size bound on `meta` via `bcs::to_bytes(&meta)` (see [MAX_META_LEN]).
-public native fun upsert_self(
+public fun upsert_self(
     self: &mut LeaderRegistry,
     leader_cap: &nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_registry::leader_cap::OverNetwork,
     >,
     meta: Metadata,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Stake `amount` (MIST) into a leader's pool.
 ///
 /// Anyone can stake into any active leader. Staking mints shares for the caller based on the
 /// current pool value and total shares.
-public native fun stake(
+public fun stake(
     self: &mut LeaderRegistry,
     leader_cap_id: sui::object::ID,
     pay_with: &mut sui::coin::Coin<talus::us::US>,
     amount: u64,
     clock: &sui::clock::Clock,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Request to unstake `amount` (MIST) from a leader pool.
 ///
 /// This converts `amount` into shares at the current share price, moves those shares from the
 /// caller's active position into a pending position, and records the request timestamp.
-public native fun request_unstake(
+public fun request_unstake(
     self: &mut LeaderRegistry,
     leader_cap_id: sui::object::ID,
     amount: u64,
     clock: &sui::clock::Clock,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun assert_leader_cap_matches_registry(
+public fun assert_leader_cap_matches_registry(
     self: &LeaderRegistry,
     leader_cap: &nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_registry::leader_cap::OverNetwork,
     >,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Asserts that the concrete leader capability belongs to and is currently listed by this registry.
-public native fun assert_current_leader_cap(
+public fun assert_current_leader_cap(
     self: &LeaderRegistry,
     leader_cap: &nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_registry::leader_cap::OverNetwork,
     >,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Return the top 2 leaders from a uniform deterministic ranking over all active leaders in this
 /// registry.
 ///
 /// Aborts with [EEmptyLeaderSet] if there are no eligible leaders (see [is_eligible]). If exactly
 /// one eligible leader remains, it is duplicated to produce a length 2 result.
-public native fun rank_active_leaders_uniform<W: drop>(
+public fun rank_active_leaders_uniform<W: drop>(
     self: &LeaderRegistry,
     seed: &vector<u8>,
-): vector<sui::object::ID>;
+): vector<sui::object::ID> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Return the top 2 leaders from a stake weighted deterministic ranking over all active leaders
 /// in this registry.
 ///
 /// Aborts with [EEmptyLeaderSet] if there are no eligible leaders (see [is_eligible]). If exactly
 /// one eligible leader remains, it is duplicated to produce a length 2 result.
-public native fun rank_active_leaders_stake_weighted<W: drop>(
+public fun rank_active_leaders_stake_weighted<W: drop>(
     self: &LeaderRegistry,
     seed: &vector<u8>,
-): vector<sui::object::ID>;
+): vector<sui::object::ID> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Stamps a worksheet with this registry through the current runtime authority.
-public native fun stamp_workflow_worksheet<R>(
+public fun stamp_workflow_worksheet<R>(
     _permit: &nexus_kernel::runtime_authority::RuntimePermit<R>,
     self: &LeaderRegistry,
     worksheet: &mut nexus_primitives::proof_of_uid::ProofOfUID,
     data: vector<u8>,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Activate a leader and claim ownership of its `Active` state.
 ///
@@ -446,13 +526,15 @@ public native fun stamp_workflow_worksheet<R>(
 /// Aborts with [ELeaderSlashed] if the leader is `Slashed` (the only abort path);
 /// a slashed leader can never reclaim. Aborts with [ELeaderNotFound] if no record
 /// exists.
-public native fun activate_and_claim(
+public fun activate_and_claim(
     self: &mut LeaderRegistry,
     leader_cap: &nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_registry::leader_cap::OverNetwork,
     >,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Suspend a leader only if the caller still owns the current `Active` state.
 ///
@@ -468,47 +550,55 @@ public native fun activate_and_claim(
 ///
 /// Does not clear `claim_token`; the next activation overwrites it. Aborts with
 /// [ELeaderNotFound] if no record exists.
-public native fun suspend_if_token(
+public fun suspend_if_token(
     self: &mut LeaderRegistry,
     leader_cap: &nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_registry::leader_cap::OverNetwork,
     >,
     token: vector<u8>,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Set the unbonding duration (in milliseconds) applied to [request_unstake].
 ///
 /// This is an administrative action gated by the leader capabilities admin cap.
-public native fun set_unbonding_duration_ms(
+public fun set_unbonding_duration_ms(
     self: &mut LeaderRegistry,
     admin: &mut LeaderCapabilitiesAdminCap,
     new_duration_ms: u64,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Set the minimum stake (in US base units) required for leader eligibility.
 ///
 /// This is an administrative action gated by the leader capabilities admin cap.
-public native fun set_min_stake_us(
+public fun set_min_stake_us(
     self: &mut LeaderRegistry,
     admin: &mut LeaderCapabilitiesAdminCap,
     min_stake_us: u64,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Set the maximum budget (in MIST) a leader may spend on a single transaction.
 ///
 /// This is an administrative action gated by the leader capabilities admin cap.
 /// Aborts with [EMaxTransactionBudgetTooLow] if the new value is below
 /// [MIN_TRANSACTION_BUDGET_MIST].
-public native fun set_max_transaction_budget(
+public fun set_max_transaction_budget(
     self: &mut LeaderRegistry,
     admin: &mut LeaderCapabilitiesAdminCap,
     new_max_transaction_budget: u64,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Slash stake for a leader. Returns the slashed balance to the caller.
 ///
 /// Slashing reduces the leader pool and therefore reduces share value for all stakers.
-public native fun slash_stake(
+public fun slash_stake(
     self: &mut LeaderRegistry,
     _slashing_cap: &nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_registry::leader_slashing::OverLeaderSlashing,
@@ -516,29 +606,37 @@ public native fun slash_stake(
     leader_cap_id: sui::object::ID,
     amount: u64,
     clock: &sui::clock::Clock,
-): sui::balance::Balance<talus::us::US>;
+): sui::balance::Balance<talus::us::US> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Allow [address] to request capabilities from this registry.
-public native fun allow_address(
+public fun allow_address(
     self: &mut LeaderRegistry,
     admin: &mut LeaderCapabilitiesAdminCap,
     address: address,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Revoke [address] from requesting capabilities.
-public native fun disallow_address(
+public fun disallow_address(
     self: &mut LeaderRegistry,
     admin: &mut LeaderCapabilitiesAdminCap,
     address: address,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Clone and transfer a leader capability to the sender.
 ///
 /// The sender must be in the capabilities allowlist.
-public native fun request_leader_cap(
+public fun request_leader_cap(
     self: &mut LeaderRegistry,
     ctx: &mut sui::tx_context::TxContext,
-): sui::object::ID;
+): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Register the sender as a leader in a single atomic flow:
 /// 1) clone and transfer [leader_cap::OverNetwork],
@@ -548,11 +646,13 @@ public native fun request_leader_cap(
 /// Requirements:
 /// - sender is in the capabilities allowlist.
 /// - `amount >= min_stake_us(self)` (eligible on registration).
-public native fun register(
+public fun register(
     self: &mut LeaderRegistry,
     pay_with: &mut sui::coin::Coin<talus::us::US>,
     amount: u64,
     meta: Metadata,
     clock: &sui::clock::Clock,
     ctx: &mut sui::tx_context::TxContext,
-): sui::object::ID;
+): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}

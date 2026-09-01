@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_interface::graph`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_interface::graph;
 
-//! Interface for [`nexus_interface::graph`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Identifies a DAG vertex at runtime, with optional loop iteration state.
 /// Iterator state is attached at runtime because the static DAG stores each vertex once.
@@ -150,285 +158,434 @@ public struct Edge has copy, drop, store {
 }
 
 /// Creates an on chain vertex kind for the given tool fully qualified name.
-public native fun vertex_on_chain(tool_fqn: std::ascii::String): VertexKind;
+public fun vertex_on_chain(tool_fqn: std::ascii::String): VertexKind {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates an off chain vertex kind for the given tool fully qualified name.
-public native fun vertex_off_chain(tool_fqn: std::ascii::String): VertexKind;
+public fun vertex_off_chain(tool_fqn: std::ascii::String): VertexKind {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates a vertex from its ASCII name.
-public native fun vertex_from_string(name: std::ascii::String): Vertex;
+public fun vertex_from_string(name: std::ascii::String): Vertex {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the vertex's ASCII name.
-public native fun vertex_into_string(vertex: Vertex): std::ascii::String;
+public fun vertex_into_string(vertex: Vertex): std::ascii::String {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates a plain runtime vertex (without iterator state) from a vertex.
-public native fun runtime_vertex_plain_from_vertex(vertex: Vertex): RuntimeVertex;
+public fun runtime_vertex_plain_from_vertex(vertex: Vertex): RuntimeVertex {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates a plain runtime vertex (without iterator state) from an ASCII name.
-public native fun runtime_vertex_plain_from_string(name: std::ascii::String): RuntimeVertex;
+public fun runtime_vertex_plain_from_string(name: std::ascii::String): RuntimeVertex {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates a runtime vertex carrying iterator position and bound from a vertex.
-public native fun runtime_vertex_with_iterator_from_vertex(
+public fun runtime_vertex_with_iterator_from_vertex(
     vertex: Vertex,
     iteration: u64,
     out_of: u64,
-): RuntimeVertex;
+): RuntimeVertex {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates a runtime vertex carrying iterator position and bound from an ASCII name.
-public native fun runtime_vertex_with_iterator_from_string(
+public fun runtime_vertex_with_iterator_from_string(
     name: std::ascii::String,
     iteration: u64,
     out_of: u64,
-): RuntimeVertex;
+): RuntimeVertex {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the `Normal` edge kind.
-public native fun edge_kind_normal(): EdgeKind;
+public fun edge_kind_normal(): EdgeKind {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the `ForEach` edge kind.
-public native fun edge_kind_for_each(): EdgeKind;
+public fun edge_kind_for_each(): EdgeKind {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the `Collect` edge kind.
-public native fun edge_kind_collect(): EdgeKind;
+public fun edge_kind_collect(): EdgeKind {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the `DoWhile` edge kind.
-public native fun edge_kind_do_while(): EdgeKind;
+public fun edge_kind_do_while(): EdgeKind {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the `Break` edge kind.
-public native fun edge_kind_break(): EdgeKind;
+public fun edge_kind_break(): EdgeKind {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the `Static` edge kind.
-public native fun edge_kind_static(): EdgeKind;
+public fun edge_kind_static(): EdgeKind {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the `Terminate` post failure action value.
-public native fun post_failure_action_terminate(): PostFailureAction;
+public fun post_failure_action_terminate(): PostFailureAction {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the `TransientContinue` post failure action value.
-public native fun post_failure_action_transient_continue(): PostFailureAction;
+public fun post_failure_action_transient_continue(): PostFailureAction {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates an output variant from its ASCII name.
-public native fun output_variant_from_string(name: std::ascii::String): OutputVariant;
+public fun output_variant_from_string(name: std::ascii::String): OutputVariant {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the output variant's ASCII name.
-public native fun output_variant_into_string(variant: OutputVariant): std::ascii::String;
+public fun output_variant_into_string(variant: OutputVariant): std::ascii::String {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates an output port from its ASCII name.
-public native fun output_port_from_string(name: std::ascii::String): OutputPort;
+public fun output_port_from_string(name: std::ascii::String): OutputPort {
+    abort ELocalExecutionUnavailable
+}
 
 /// Builds the port from raw.
-public native fun output_port_from_raw(name: vector<u8>): OutputPort;
+public fun output_port_from_raw(name: vector<u8>): OutputPort {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the output port's ASCII name.
-public native fun output_port_into_string(port: OutputPort): std::ascii::String;
+public fun output_port_into_string(port: OutputPort): std::ascii::String {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates an input port from its ASCII name.
-public native fun input_port_from_string(name: std::ascii::String): InputPort;
+public fun input_port_from_string(name: std::ascii::String): InputPort {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the input port's ASCII name.
-public native fun input_port_into_string(port: InputPort): std::ascii::String;
+public fun input_port_into_string(port: InputPort): std::ascii::String {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates single valued, non static port data.
-public native fun port_data_single(data: nexus_primitives::data::NexusData): PortData;
+public fun port_data_single(data: nexus_primitives::data::NexusData): PortData {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates single valued port data marked as originating from a static edge.
-public native fun port_data_single_static(data: nexus_primitives::data::NexusData): PortData;
+public fun port_data_single_static(data: nexus_primitives::data::NexusData): PortData {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates port data keyed by iteration number for a looped vertex.
-public native fun port_data_many(
+public fun port_data_many(
     data: sui::vec_map::VecMap<u64, nexus_primitives::data::NexusData>,
     total_iterations: u64,
-): PortData;
+): PortData {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates an empty `VertexEvaluations` object with a fresh UID.
-public native fun new_vertex_evaluations(ctx: &mut sui::tx_context::TxContext): VertexEvaluations;
+public fun new_vertex_evaluations(ctx: &mut sui::tx_context::TxContext): VertexEvaluations {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns a reference to the map from input port to its collected port data.
-public native fun vertex_evaluations_ports_to_data(
+public fun vertex_evaluations_ports_to_data(
     self: &VertexEvaluations,
-): &sui::vec_map::VecMap<InputPort, PortData>;
+): &sui::vec_map::VecMap<InputPort, PortData> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns a mutable reference to the map from input port to its port data.
-public native fun vertex_evaluations_ports_to_data_mut(
+public fun vertex_evaluations_ports_to_data_mut(
     self: &mut VertexEvaluations,
-): &mut sui::vec_map::VecMap<InputPort, PortData>;
+): &mut sui::vec_map::VecMap<InputPort, PortData> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the port data value applicable to the given runtime vertex.
 /// For single data the value is always returned; for iteration keyed data the
 /// value for the vertex's current iteration is returned, or none if the vertex
 /// has no iterator or no value is stored for that iteration.
-public native fun port_data_runtime_vertex_input(
+public fun port_data_runtime_vertex_input(
     self: &PortData,
     expected_vertex: &RuntimeVertex,
-): std::option::Option<nexus_primitives::data::NexusData>;
+): std::option::Option<nexus_primitives::data::NexusData> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns true if the port data is a single value rather than iteration keyed.
-public native fun port_data_is_single(self: &PortData): bool;
+public fun port_data_is_single(self: &PortData): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns true if this is single port data whose value and static flag both
 /// equal the given arguments.
-public native fun port_data_single_matches(
+public fun port_data_single_matches(
     self: &PortData,
     data: nexus_primitives::data::NexusData,
     is_static: bool,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns true if this is single port data that came from a static edge.
-public native fun port_data_single_is_static(self: &PortData): bool;
+public fun port_data_single_is_static(self: &PortData): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the iteration keys for iteration keyed port data, or none if single.
-public native fun port_data_many_keys(self: &PortData): std::option::Option<vector<u64>>;
+public fun port_data_many_keys(self: &PortData): std::option::Option<vector<u64>> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the total iteration count for iteration keyed port data, or none if single.
-public native fun port_data_many_total_iterations(self: &PortData): std::option::Option<u64>;
+public fun port_data_many_total_iterations(self: &PortData): std::option::Option<u64> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the number of stored iteration entries, or none if single port data.
-public native fun port_data_many_len(self: &PortData): std::option::Option<u64>;
+public fun port_data_many_len(self: &PortData): std::option::Option<u64> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns true if iteration keyed port data holds a value for the given iteration.
-public native fun port_data_many_contains(self: &PortData, iteration: u64): bool;
+public fun port_data_many_contains(self: &PortData, iteration: u64): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the value stored for the given iteration, or none if single port
 /// data or no value exists for that iteration.
-public native fun port_data_many_value(
+public fun port_data_many_value(
     self: &PortData,
     iteration: u64,
-): std::option::Option<nexus_primitives::data::NexusData>;
+): std::option::Option<nexus_primitives::data::NexusData> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Inserts a value for the given iteration into iteration keyed port data,
 /// returning true on success, or false if this is single port data.
-public native fun port_data_many_insert(
+public fun port_data_many_insert(
     self: &mut PortData,
     iteration: u64,
     data: nexus_primitives::data::NexusData,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Removes and returns the value for the given iteration, or none if single
 /// port data or no value exists for that iteration.
-public native fun port_data_many_remove(
+public fun port_data_many_remove(
     self: &mut PortData,
     iteration: u64,
-): std::option::Option<nexus_primitives::data::NexusData>;
+): std::option::Option<nexus_primitives::data::NexusData> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the entry group.
-public native fun default_entry_group(): EntryGroup;
+public fun default_entry_group(): EntryGroup {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates an entry group from its ASCII name.
-public native fun entry_group_from_string(name: std::ascii::String): EntryGroup;
+public fun entry_group_from_string(name: std::ascii::String): EntryGroup {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the entry group's ASCII name.
-public native fun entry_group_into_string(group: EntryGroup): std::ascii::String;
+public fun entry_group_into_string(group: EntryGroup): std::ascii::String {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns true if the runtime vertex is plain (has no iterator state).
-public native fun runtime_vertex_is_plain(vertex: &RuntimeVertex): bool;
+public fun runtime_vertex_is_plain(vertex: &RuntimeVertex): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns true if the runtime vertex carries iterator state.
-public native fun runtime_vertex_is_with_iterator(vertex: &RuntimeVertex): bool;
+public fun runtime_vertex_is_with_iterator(vertex: &RuntimeVertex): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the current iteration of the runtime vertex, or zero if plain.
-public native fun runtime_vertex_iteration_or_zero(vertex: &RuntimeVertex): u64;
+public fun runtime_vertex_iteration_or_zero(vertex: &RuntimeVertex): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the current iteration of the runtime vertex.
 /// Aborts with `ERuntimeVertexIterationUnavailable` if the vertex is plain.
-public native fun runtime_vertex_iteration(vertex: &RuntimeVertex): u64;
+public fun runtime_vertex_iteration(vertex: &RuntimeVertex): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the total iteration bound of the runtime vertex.
 /// Aborts with `ERuntimeVertexOutOfUnavailable` if the vertex is plain.
-public native fun runtime_vertex_out_of(vertex: &RuntimeVertex): u64;
+public fun runtime_vertex_out_of(vertex: &RuntimeVertex): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns true if the vertex kind is on chain.
-public native fun vertex_kind_is_on_chain(kind: &VertexKind): bool;
+public fun vertex_kind_is_on_chain(kind: &VertexKind): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns true if the vertex kind is off chain.
-public native fun vertex_kind_is_off_chain(kind: &VertexKind): bool;
+public fun vertex_kind_is_off_chain(kind: &VertexKind): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the tool fully qualified name of the vertex kind.
-public native fun vertex_kind_tool_fqn(kind: &VertexKind): std::ascii::String;
+public fun vertex_kind_tool_fqn(kind: &VertexKind): std::ascii::String {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns true if the output variant is the reserved `_err_eval` variant.
-public native fun output_variant_is_err_eval(variant: &OutputVariant): bool;
+public fun output_variant_is_err_eval(variant: &OutputVariant): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Derives the input port.
-public native fun vertex_input_port(vertex: Vertex, port: InputPort): VertexInputPort;
+public fun vertex_input_port(vertex: Vertex, port: InputPort): VertexInputPort {
+    abort ELocalExecutionUnavailable
+}
 
 /// Builds a vertex input port from the vertex and port ASCII names.
-public native fun vertex_input_port_from_string(
+public fun vertex_input_port_from_string(
     vertex: std::ascii::String,
     port: std::ascii::String,
-): VertexInputPort;
+): VertexInputPort {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the vertex component of the vertex input port.
-public native fun vertex_input_port_vertex(port: &VertexInputPort): Vertex;
+public fun vertex_input_port_vertex(port: &VertexInputPort): Vertex {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the input port component of the vertex input port.
-public native fun vertex_input_port_port(port: &VertexInputPort): InputPort;
+public fun vertex_input_port_port(port: &VertexInputPort): InputPort {
+    abort ELocalExecutionUnavailable
+}
 
 /// Combines an output variant and output port into an output variant port.
-public native fun output_variant_port(variant: OutputVariant, port: OutputPort): OutputVariantPort;
+public fun output_variant_port(variant: OutputVariant, port: OutputPort): OutputVariantPort {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the output variant component of the output variant port.
-public native fun output_variant_port_variant(port: &OutputVariantPort): OutputVariant;
+public fun output_variant_port_variant(port: &OutputVariantPort): OutputVariant {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the output port component of the output variant port.
-public native fun output_variant_port_port(port: &OutputVariantPort): OutputPort;
+public fun output_variant_port_port(port: &OutputVariantPort): OutputPort {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates an edge from an output variant port to a vertex input port with the given kind.
-public native fun edge(from: OutputVariantPort, to: VertexInputPort, kind: EdgeKind): Edge;
+public fun edge(from: OutputVariantPort, to: VertexInputPort, kind: EdgeKind): Edge {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the edge's source output variant port.
-public native fun edge_from(edge: &Edge): OutputVariantPort;
+public fun edge_from(edge: &Edge): OutputVariantPort {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the edge's destination vertex input port.
-public native fun edge_to(edge: &Edge): VertexInputPort;
+public fun edge_to(edge: &Edge): VertexInputPort {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the edge's kind.
-public native fun edge_kind(edge: &Edge): EdgeKind;
+public fun edge_kind(edge: &Edge): EdgeKind {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the output variant of the edge's source port.
-public native fun edge_from_variant(edge: &Edge): OutputVariant;
+public fun edge_from_variant(edge: &Edge): OutputVariant {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the output port of the edge's source port.
-public native fun edge_from_port(edge: &Edge): OutputPort;
+public fun edge_from_port(edge: &Edge): OutputPort {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the destination vertex of the edge.
-public native fun edge_to_vertex(edge: &Edge): Vertex;
+public fun edge_to_vertex(edge: &Edge): Vertex {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the destination input port of the edge.
-public native fun edge_to_port(edge: &Edge): InputPort;
+public fun edge_to_port(edge: &Edge): InputPort {
+    abort ELocalExecutionUnavailable
+}
 
 /// Helper to construct inputs for [execution_entries::begin_execution].
 /// Creates a map from a row based input (ie. repeat vertex name for each row).
-public native fun inputs_to_begin_execution(
+public fun inputs_to_begin_execution(
     vertices: vector<Vertex>,
     ports: vector<InputPort>,
     data: vector<nexus_primitives::data::NexusData>,
-): sui::vec_map::VecMap<Vertex, sui::vec_map::VecMap<InputPort, nexus_primitives::data::NexusData>>;
+): sui::vec_map::VecMap<
+    Vertex,
+    sui::vec_map::VecMap<InputPort, nexus_primitives::data::NexusData>,
+> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Converts a tagged output into its DAG output variant and per port data map.
-public native fun tagged_output_to_dag_types(
+public fun tagged_output_to_dag_types(
     tagged_output: nexus_primitives::tagged_output::TaggedOutput,
-): (OutputVariant, sui::vec_map::VecMap<OutputPort, nexus_primitives::data::NexusData>);
+): (OutputVariant, sui::vec_map::VecMap<OutputPort, nexus_primitives::data::NexusData>) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Converts raw tagged output parts into a DAG output variant and per port data map.
-public native fun tagged_output_parts_to_dag_types(
+public fun tagged_output_parts_to_dag_types(
     variant_bytes: vector<u8>,
     ports: sui::vec_map::VecMap<vector<u8>, nexus_primitives::data::NexusData>,
-): (OutputVariant, sui::vec_map::VecMap<OutputPort, nexus_primitives::data::NexusData>);
+): (OutputVariant, sui::vec_map::VecMap<OutputPort, nexus_primitives::data::NexusData>) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the vertex name.
-public native fun vertex_name(vertex: &RuntimeVertex): Vertex;
+public fun vertex_name(vertex: &RuntimeVertex): Vertex {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the map's output ports sorted ascending by their name bytes.
-public native fun sorted_output_ports(
+public fun sorted_output_ports(
     variant_ports_to_data: &sui::vec_map::VecMap<OutputPort, nexus_primitives::data::NexusData>,
-): vector<OutputPort>;
+): vector<OutputPort> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Computes a deterministic SHA 256 digest over the output variant name and its
 /// ports and data, sorted by port name for a stable ordering.
-public native fun submitted_output_payload_sha256(
+public fun submitted_output_payload_sha256(
     variant: OutputVariant,
     variant_ports_to_data: &sui::vec_map::VecMap<OutputPort, nexus_primitives::data::NexusData>,
-): vector<u8>;
+): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the input ports sorted ascending by their name bytes.
-public native fun sorted_input_ports(
-    input_ports: &sui::vec_set::VecSet<InputPort>,
-): vector<InputPort>;
+public fun sorted_input_ports(input_ports: &sui::vec_set::VecSet<InputPort>): vector<InputPort> {
+    abort ELocalExecutionUnavailable
+}

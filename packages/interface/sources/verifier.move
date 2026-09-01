@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_interface::verifier`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_interface::verifier;
 
-//! Interface for [`nexus_interface::verifier`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Verification selected by one offchain DAG vertex.
 public enum ToolVerifierMode has copy, drop, store {
@@ -99,160 +107,246 @@ public struct VerificationVerdict {
     decision: VerifierDecision,
 }
 
-public native fun verifier_mode_none(): ToolVerifierMode;
+public fun verifier_mode_none(): ToolVerifierMode {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun verifier_mode_registered_key(): ToolVerifierMode;
+public fun verifier_mode_registered_key(): ToolVerifierMode {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun verifier_mode_external(): ToolVerifierMode;
+public fun verifier_mode_external(): ToolVerifierMode {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun failure_evidence_kind_tool_evidence(): FailureEvidenceKind;
+public fun failure_evidence_kind_tool_evidence(): FailureEvidenceKind {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun failure_evidence_kind_leader_evidence(): FailureEvidenceKind;
+public fun failure_evidence_kind_leader_evidence(): FailureEvidenceKind {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun committed_result_evidence_is_leader_failure(
+public fun committed_result_evidence_is_leader_failure(
     evidence: &std::option::Option<FailureEvidenceKind>,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun committed_result_evidence_is_tool_failure(
+public fun committed_result_evidence_is_tool_failure(
     evidence: &std::option::Option<FailureEvidenceKind>,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun new_method_id(
+public fun new_method_id(
     tool_id: sui::object::ID,
     package_id: sui::object::ID,
     module_name: std::ascii::String,
     function_name: std::ascii::String,
-): VerifierMethodId;
+): VerifierMethodId {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun method_tool_id(self: &VerifierMethodId): sui::object::ID;
+public fun method_tool_id(self: &VerifierMethodId): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun support_registered_key(): ToolVerifierSupport;
+public fun support_registered_key(): ToolVerifierSupport {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun support_external(method_id: VerifierMethodId): ToolVerifierSupport;
+public fun support_external(method_id: VerifierMethodId): ToolVerifierSupport {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun support_matches_mode(self: &ToolVerifierSupport, mode: ToolVerifierMode): bool;
+public fun support_matches_mode(self: &ToolVerifierSupport, mode: ToolVerifierMode): bool {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun support_method(self: &ToolVerifierSupport): std::option::Option<VerifierMethodId>;
+public fun support_method(self: &ToolVerifierSupport): std::option::Option<VerifierMethodId> {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun leader_target_onchain(tool_witness_id: sui::object::ID): LeaderTarget;
+public fun leader_target_onchain(tool_witness_id: sui::object::ID): LeaderTarget {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun leader_target_offchain(
+public fun leader_target_offchain(
     tool_id: sui::object::ID,
     verifier_witness_id: std::option::Option<sui::object::ID>,
-): LeaderTarget;
+): LeaderTarget {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun leader_stamp_data(
+public fun leader_stamp_data(
     leader_cap_id: sui::object::ID,
     target: LeaderTarget,
-): LeaderStampData;
+): LeaderStampData {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun leader_stamp_leader_cap_id(self: &LeaderStampData): sui::object::ID;
+public fun leader_stamp_leader_cap_id(self: &LeaderStampData): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun leader_stamp_target(self: &LeaderStampData): LeaderTarget;
+public fun leader_stamp_target(self: &LeaderStampData): LeaderTarget {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun leader_target_is_offchain(self: &LeaderTarget): bool;
+public fun leader_target_is_offchain(self: &LeaderTarget): bool {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun leader_target_tool_id(self: &LeaderTarget): sui::object::ID;
+public fun leader_target_tool_id(self: &LeaderTarget): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun leader_target_verifier_witness_id(
+public fun leader_target_verifier_witness_id(
     self: &LeaderTarget,
-): std::option::Option<sui::object::ID>;
+): std::option::Option<sui::object::ID> {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun registered_key_stamp_data(
+public fun registered_key_stamp_data(
     input_hash: vector<u8>,
     output_hash: vector<u8>,
     nonce: vector<u8>,
-): RegisteredKeyStampData;
+): RegisteredKeyStampData {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun registered_key_stamp_input_hash(self: &RegisteredKeyStampData): vector<u8>;
+public fun registered_key_stamp_input_hash(self: &RegisteredKeyStampData): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun registered_key_stamp_output_hash(self: &RegisteredKeyStampData): vector<u8>;
+public fun registered_key_stamp_output_hash(self: &RegisteredKeyStampData): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun registered_key_stamp_nonce(self: &RegisteredKeyStampData): vector<u8>;
+public fun registered_key_stamp_nonce(self: &RegisteredKeyStampData): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun external_stamp_data(output_hash: vector<u8>): ExternalVerifierStampData;
+public fun external_stamp_data(output_hash: vector<u8>): ExternalVerifierStampData {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun external_stamp_output_hash(self: &ExternalVerifierStampData): vector<u8>;
+public fun external_stamp_output_hash(self: &ExternalVerifierStampData): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun registered_key_auxiliary(
+public fun registered_key_auxiliary(
     input_hash: vector<u8>,
     nonce: vector<u8>,
     leader_signature: vector<u8>,
     tool_signature: vector<u8>,
-): RegisteredKeyAuxiliary;
+): RegisteredKeyAuxiliary {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun auxiliary_input_hash(self: &RegisteredKeyAuxiliary): vector<u8>;
+public fun auxiliary_input_hash(self: &RegisteredKeyAuxiliary): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun auxiliary_nonce(self: &RegisteredKeyAuxiliary): vector<u8>;
+public fun auxiliary_nonce(self: &RegisteredKeyAuxiliary): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun auxiliary_leader_signature(self: &RegisteredKeyAuxiliary): vector<u8>;
+public fun auxiliary_leader_signature(self: &RegisteredKeyAuxiliary): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun auxiliary_tool_signature(self: &RegisteredKeyAuxiliary): vector<u8>;
+public fun auxiliary_tool_signature(self: &RegisteredKeyAuxiliary): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Derives the nonce for one logical off chain Tool invocation.
-public native fun tool_invocation_nonce(
+public fun tool_invocation_nonce(
     execution_id: sui::object::ID,
     walk_index: u64,
     vertex_name: vector<u8>,
     iteration: u64,
-): vector<u8>;
+): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Builds the exact nonce bound message signed by a RegisteredKey Tool.
-public native fun registered_key_tool_signature_message(
+public fun registered_key_tool_signature_message(
     leader_signature: vector<u8>,
     nonce: vector<u8>,
     output_hash: vector<u8>,
-): vector<u8>;
+): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Hashes the canonical response body under the existing direct protocol domain.
-public native fun output_sha256(output: &nexus_primitives::tagged_output::TaggedOutput): vector<u8>;
+public fun output_sha256(output: &nexus_primitives::tagged_output::TaggedOutput): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Builds an accepted verdict for a vertex configured as `None`.
-public native fun new_none(
-    output: nexus_primitives::tagged_output::TaggedOutput,
-): VerificationVerdict;
+public fun new_none(output: nexus_primitives::tagged_output::TaggedOutput): VerificationVerdict {
+    abort ELocalExecutionUnavailable
+}
 
 /// Builds an External accept verdict and stamps the exact output hash.
-public native fun new_accept(
+public fun new_accept(
     worksheet: &mut nexus_primitives::proof_of_uid::ProofOfUID,
     output: nexus_primitives::tagged_output::TaggedOutput,
     witness_uid: &sui::object::UID,
-): VerificationVerdict;
+): VerificationVerdict {
+    abort ELocalExecutionUnavailable
+}
 
 /// Builds an External reject verdict and normalizes its optional reason.
-public native fun new_reject(
+public fun new_reject(
     worksheet: &mut nexus_primitives::proof_of_uid::ProofOfUID,
     output: nexus_primitives::tagged_output::TaggedOutput,
     witness_uid: &sui::object::UID,
     reason: std::option::Option<vector<u8>>,
-): VerificationVerdict;
+): VerificationVerdict {
+    abort ELocalExecutionUnavailable
+}
 
 /// Builds and stamps the verdict produced by the built in RegisteredKey verifier.
-public native fun new_registered_key_verdict(
+public fun new_registered_key_verdict(
     worksheet: &mut nexus_primitives::proof_of_uid::ProofOfUID,
     output: nexus_primitives::tagged_output::TaggedOutput,
     input_hash: vector<u8>,
     nonce: vector<u8>,
     witness_uid: &sui::object::UID,
     accepted: bool,
-): VerificationVerdict;
+): VerificationVerdict {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun verdict_witness_id(
-    self: &VerificationVerdict,
-): std::option::Option<sui::object::ID>;
+public fun verdict_witness_id(self: &VerificationVerdict): std::option::Option<sui::object::ID> {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun verdict_decision(self: &VerificationVerdict): VerifierDecision;
+public fun verdict_decision(self: &VerificationVerdict): VerifierDecision {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun verdict_output_hash(self: &VerificationVerdict): vector<u8>;
+public fun verdict_output_hash(self: &VerificationVerdict): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun consume_verdict(
+public fun consume_verdict(
     self: VerificationVerdict,
 ): (
     nexus_primitives::tagged_output::TaggedOutput,
     std::option::Option<sui::object::ID>,
     VerifierDecision,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun decision_is_accept(self: &VerifierDecision): bool;
+public fun decision_is_accept(self: &VerifierDecision): bool {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun decision_reason(self: VerifierDecision): std::option::Option<vector<u8>>;
+public fun decision_reason(self: VerifierDecision): std::option::Option<vector<u8>> {
+    abort ELocalExecutionUnavailable
+}

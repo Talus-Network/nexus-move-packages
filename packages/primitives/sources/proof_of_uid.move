@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_primitives::proof_of_uid`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_primitives::proof_of_uid;
 
-//! Interface for [`nexus_primitives::proof_of_uid`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Hot potato that can collect stamps.
 ///
@@ -31,80 +39,112 @@ public struct UIDRequirements {
 }
 
 /// Creates an empty proof bound to the given UID.
-public native fun new(uid: &sui::object::UID): ProofOfUID;
+public fun new(uid: &sui::object::UID): ProofOfUID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates an empty proof bound to the given UID and recording the object's type.
 /// Aborts if the UID does not match the object's ID.
-public native fun new_with_type<T: key>(uid: &sui::object::UID, o: &T): ProofOfUID;
+public fun new_with_type<T: key>(uid: &sui::object::UID, o: &T): ProofOfUID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Consumes the proof and returns its stamps.
 /// Aborts unless the given UID is the one that created the proof.
-public native fun consume(
+public fun consume(
     self: ProofOfUID,
     uid: &sui::object::UID,
-): sui::vec_map::VecMap<sui::object::ID, vector<u8>>;
+): sui::vec_map::VecMap<sui::object::ID, vector<u8>> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Add a stamp to the proof with some data.
-public native fun stamp_with_data(self: &mut ProofOfUID, uid: &sui::object::UID, data: vector<u8>);
+public fun stamp_with_data(self: &mut ProofOfUID, uid: &sui::object::UID, data: vector<u8>) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Add a stamp to the proof.
-public native fun stamp(self: &mut ProofOfUID, uid: &sui::object::UID);
+public fun stamp(self: &mut ProofOfUID, uid: &sui::object::UID) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Removes the stamp for the given UID.
 /// Aborts if no such stamp exists.
-public native fun unstamp(self: &mut ProofOfUID, uid: &sui::object::UID);
+public fun unstamp(self: &mut ProofOfUID, uid: &sui::object::UID) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Borrows the map of stamps keyed by stamper ID.
-public native fun stamps(self: &ProofOfUID): &sui::vec_map::VecMap<sui::object::ID, vector<u8>>;
+public fun stamps(self: &ProofOfUID): &sui::vec_map::VecMap<sui::object::ID, vector<u8>> {
+    abort ELocalExecutionUnavailable
+}
 
 /// The number of stamps on the proof.
-public native fun stamps_len(self: &ProofOfUID): u64;
+public fun stamps_len(self: &ProofOfUID): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Whether the proof carries a stamp for the given ID.
-public native fun has_stamp(self: &ProofOfUID, of_uid: sui::object::ID): bool;
+public fun has_stamp(self: &ProofOfUID, of_uid: sui::object::ID): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Whether the proof carries a stamp for the given ID with exactly the given data.
-public native fun has_stamp_with_data(
+public fun has_stamp_with_data(
     self: &ProofOfUID,
     of_uid: sui::object::ID,
     data: &vector<u8>,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the data attached to the given ID's stamp, or none if absent.
-public native fun read_stamp_data_of_id(
+public fun read_stamp_data_of_id(
     self: &ProofOfUID,
     of_uid: sui::object::ID,
-): std::option::Option<vector<u8>>;
+): std::option::Option<vector<u8>> {
+    abort ELocalExecutionUnavailable
+}
 
 /// The ID of the UID that created the proof.
-public native fun created_from(self: &ProofOfUID): sui::object::ID;
+public fun created_from(self: &ProofOfUID): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// The recorded type of the creating object, if it was provided at construction.
-public native fun type_name(self: &ProofOfUID): std::option::Option<std::type_name::TypeName>;
+public fun type_name(self: &ProofOfUID): std::option::Option<std::type_name::TypeName> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Converts this proof into requirements authorized by its creating [UID].
 ///
 /// Each ID in `remaining` must later be removed through [satisfy]. The
 /// conversion is one way and the proof can only be recovered through
 /// [complete].
-public native fun into_requirements(
+public fun into_requirements(
     self: ProofOfUID,
     uid: &sui::object::UID,
     remaining: sui::vec_set::VecSet<sui::object::ID>,
-): UIDRequirements;
+): UIDRequirements {
+    abort ELocalExecutionUnavailable
+}
 
 /// Removes the requirement for the given [UID].
 ///
 /// Records an empty stamp when the UID is required. Does nothing if the UID is
 /// not required or has already participated.
-public native fun satisfy(self: &mut UIDRequirements, uid: &sui::object::UID);
+public fun satisfy(self: &mut UIDRequirements, uid: &sui::object::UID) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Borrows the wrapped [ProofOfUID] for authorization checks.
-public native fun proof(self: &UIDRequirements): &ProofOfUID;
+public fun proof(self: &UIDRequirements): &ProofOfUID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Completes the requirements and returns the stamps collected before conversion.
 ///
 /// Aborts while any required [UID] has not participated.
-public native fun complete(
-    self: UIDRequirements,
-): sui::vec_map::VecMap<sui::object::ID, vector<u8>>;
+public fun complete(self: UIDRequirements): sui::vec_map::VecMap<sui::object::ID, vector<u8>> {
+    abort ELocalExecutionUnavailable
+}

@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_kernel::runtime_authority`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_kernel::runtime_authority;
 
-//! Interface for [`nexus_kernel::runtime_authority`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Fixed root selecting the only Scheduler facade allowed to authorize protocol effects.
 ///
@@ -43,37 +51,42 @@ public struct WorkAdmissionDisabled<phantom E>() has copy, drop, store;
 ///
 /// The actual `runtime_witness` value proves constructibility by the facade.
 /// Its type selects identity; it does not prove exact bytecode provenance.
-public native fun bind_runtime<R: drop>(
+public fun bind_runtime<R: drop>(
     authority: &mut RuntimeAuthority,
     authority_cap: &RuntimeAuthorityCap,
     scheduler_cap: &sui::package::UpgradeCap,
     runtime_witness: R,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Rotate effect authority to a witness introduced by the latest Scheduler.
 ///
 /// Rotation accepts only the [`UpgradeCap`] bound by [`bind_runtime`]. A target
 /// introduced by the current package is rejected, including while paused.
-public native fun rotate_runtime<R: drop>(
+public fun rotate_runtime<R: drop>(
     authority: &mut RuntimeAuthority,
     scheduler_cap: &sui::package::UpgradeCap,
     runtime_witness: R,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Permanently pause the currently bound runtime identity.
 ///
 /// There is no resume transition. Recovery requires [`rotate_runtime`] with a
 /// witness introduced by a later package reached through the bound cap.
-public native fun pause(authority: &mut RuntimeAuthority, cap: &RuntimeAuthorityCap);
+public fun pause(authority: &mut RuntimeAuthority, cap: &RuntimeAuthorityCap) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Acquire transaction scoped effect authority for exact runtime type `R`.
 ///
 /// Requiring a value prevents callers from gaining authority by naming a type
 /// alone. The type name is still only identity, not provenance evidence.
-public native fun authorize<R: drop>(
-    authority: &RuntimeAuthority,
-    runtime_witness: R,
-): RuntimePermit<R>;
+public fun authorize<R: drop>(authority: &RuntimeAuthority, runtime_witness: R): RuntimePermit<R> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Return whether new proposal work under contract `E` must abort.
 ///
@@ -81,27 +94,37 @@ public native fun authorize<R: drop>(
 /// this fixed state in the transaction that records a new occurrence, so an
 /// explicit disable rolls back every caller side effect atomically. Work
 /// accepted before the marker was added remains a promise to current runtime.
-public native fun is_work_admission_disabled<E>(authority: &RuntimeAuthority): bool;
+public fun is_work_admission_disabled<E>(authority: &RuntimeAuthority): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Add or remove the explicit rejection marker for proposal epoch `E`.
-public native fun set_work_admission_disabled<E>(
+public fun set_work_admission_disabled<E>(
     authority: &mut RuntimeAuthority,
     cap: &RuntimeAuthorityCap,
     disabled: bool,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Return the package that introduced the currently bound runtime type.
-public native fun runtime_package(
-    authority: &RuntimeAuthority,
-): std::option::Option<sui::object::ID>;
+public fun runtime_package(authority: &RuntimeAuthority): std::option::Option<sui::object::ID> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Return the exact currently bound runtime type.
-public native fun runtime_type(
+public fun runtime_type(
     authority: &RuntimeAuthority,
-): std::option::Option<std::type_name::TypeName>;
+): std::option::Option<std::type_name::TypeName> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Return whether the current runtime identity has been permanently paused.
-public native fun is_paused(authority: &RuntimeAuthority): bool;
+public fun is_paused(authority: &RuntimeAuthority): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Return the fixed authority root ID proven by this permit.
-public native fun permit_authority<R>(permit: &RuntimePermit<R>): sui::object::ID;
+public fun permit_authority<R>(permit: &RuntimePermit<R>): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}

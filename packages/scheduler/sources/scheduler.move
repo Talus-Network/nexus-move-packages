@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_scheduler::scheduler`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_scheduler::scheduler;
 
-//! Interface for [`nexus_scheduler::scheduler`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Settlement state visible to Task callers.
 public enum SettlementStatus has copy, drop {
@@ -107,20 +115,24 @@ public struct OccurrenceSettledEvent has copy, drop {
 ///
 /// This is a one time deployment transition. Later Scheduler releases use
 /// [`activate_runtime`] with the same stable [`UpgradeCap`] object.
-public native fun bind_runtime(
+public fun bind_runtime(
     authority: &mut nexus_kernel::runtime_authority::RuntimeAuthority,
     authority_cap: &nexus_kernel::runtime_authority::RuntimeAuthorityCap,
     scheduler_cap: &sui::package::UpgradeCap,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Activate this Scheduler release as the only protocol effect facade.
-public native fun activate_runtime(
+public fun activate_runtime(
     authority: &mut nexus_kernel::runtime_authority::RuntimeAuthority,
     scheduler_cap: &sui::package::UpgradeCap,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates an address controlled and user funded [`Task`] for one agent skill.
-public native fun new_user_task(
+public fun new_user_task(
     registry: &nexus_registry::agent_registry::AgentRegistry,
     dag: &nexus_interface::dag::DAG,
     tool_registry: &nexus_tool::tool_registry::ToolRegistry,
@@ -131,10 +143,12 @@ public native fun new_user_task(
     occurrence_budget_mist: u64,
     failure_mode: nexus_scheduler::task::FailureMode,
     ctx: &mut sui::tx_context::TxContext,
-): (nexus_scheduler::task::Task, nexus_scheduler::task::TaskPointer);
+): (nexus_scheduler::task::Task, nexus_scheduler::task::TaskPointer) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates an Agent controlled [`Task`] funded by its payment vault.
-public native fun new_agent_task(
+public fun new_agent_task(
     registry: &nexus_registry::agent_registry::AgentRegistry,
     dag: &nexus_interface::dag::DAG,
     tool_registry: &nexus_tool::tool_registry::ToolRegistry,
@@ -144,10 +158,12 @@ public native fun new_agent_task(
     occurrence_budget_mist: u64,
     failure_mode: nexus_scheduler::task::FailureMode,
     ctx: &mut sui::tx_context::TxContext,
-): (nexus_scheduler::task::Task, nexus_scheduler::task::TaskPointer);
+): (nexus_scheduler::task::Task, nexus_scheduler::task::TaskPointer) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates an address controlled [`Task`] for the default executor.
-public native fun new_default_task(
+public fun new_default_task(
     registry: &nexus_registry::agent_registry::AgentRegistry,
     dag: &nexus_interface::dag::DAG,
     tool_registry: &nexus_tool::tool_registry::ToolRegistry,
@@ -157,36 +173,44 @@ public native fun new_default_task(
     occurrence_budget_mist: u64,
     failure_mode: nexus_scheduler::task::FailureMode,
     ctx: &mut sui::tx_context::TxContext,
-): (nexus_scheduler::task::Task, nexus_scheduler::task::TaskPointer);
+): (nexus_scheduler::task::Task, nexus_scheduler::task::TaskPointer) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Shares a fully composed Task.
-public native fun share(task: nexus_scheduler::task::Task);
+public fun share(task: nexus_scheduler::task::Task) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Atomically accepts one occurrence under an address controller.
 ///
 /// The fixed authority read makes an explicit WorkAdmission disable roll back
 /// this entire caller transaction before any proposal state can persist.
-public native fun schedule(
+public fun schedule(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     task: &mut nexus_scheduler::task::Task,
     start_time_ms: u64,
     deadline_ms: std::option::Option<u64>,
     priority_fee_percentage: u64,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Atomically accepts one occurrence under an Agent controller.
-public native fun schedule_as_agent(
+public fun schedule_as_agent(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     task: &mut nexus_scheduler::task::Task,
     agent: &nexus_interface::agent::Agent,
     start_time_ms: u64,
     deadline_ms: std::option::Option<u64>,
     priority_fee_percentage: u64,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Atomically accepts one lazy recurrence under an address controller.
-public native fun set_recurrence(
+public fun set_recurrence(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     task: &mut nexus_scheduler::task::Task,
     start_time_ms: u64,
@@ -195,10 +219,12 @@ public native fun set_recurrence(
     max_occurrences: std::option::Option<u64>,
     priority_fee_percentage: u64,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Atomically accepts one lazy recurrence under an Agent controller.
-public native fun set_recurrence_as_agent(
+public fun set_recurrence_as_agent(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     task: &mut nexus_scheduler::task::Task,
     agent: &nexus_interface::agent::Agent,
@@ -207,81 +233,96 @@ public native fun set_recurrence_as_agent(
     interval_ms: u64,
     max_occurrences: std::option::Option<u64>,
     priority_fee_percentage: u64,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Clears recurring work under an address controller.
-public native fun clear_recurrence(
+public fun clear_recurrence(
     task: &mut nexus_scheduler::task::Task,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Clears recurring work under an Agent controller.
-public native fun clear_recurrence_as_agent(
+public fun clear_recurrence_as_agent(
     task: &mut nexus_scheduler::task::Task,
     agent: &nexus_interface::agent::Agent,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Pauses address controlled dispatch.
-public native fun pause(
-    task: &mut nexus_scheduler::task::Task,
-    ctx: &mut sui::tx_context::TxContext,
-);
+public fun pause(task: &mut nexus_scheduler::task::Task, ctx: &mut sui::tx_context::TxContext) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Pauses Agent controlled dispatch.
-public native fun pause_as_agent(
+public fun pause_as_agent(
     task: &mut nexus_scheduler::task::Task,
     agent: &nexus_interface::agent::Agent,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Resumes address controlled dispatch.
-public native fun resume(
-    task: &mut nexus_scheduler::task::Task,
-    ctx: &mut sui::tx_context::TxContext,
-);
+public fun resume(task: &mut nexus_scheduler::task::Task, ctx: &mut sui::tx_context::TxContext) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Resumes Agent controlled dispatch.
-public native fun resume_as_agent(
+public fun resume_as_agent(
     task: &mut nexus_scheduler::task::Task,
     agent: &nexus_interface::agent::Agent,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Cancels future work under an address controller.
-public native fun cancel(
-    task: &mut nexus_scheduler::task::Task,
-    ctx: &mut sui::tx_context::TxContext,
-);
+public fun cancel(task: &mut nexus_scheduler::task::Task, ctx: &mut sui::tx_context::TxContext) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Cancels future work under an Agent controller.
-public native fun cancel_as_agent(
+public fun cancel_as_agent(
     task: &mut nexus_scheduler::task::Task,
     agent: &nexus_interface::agent::Agent,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Refills an address funded Task reserve and advertises restored work.
-public native fun refill(
+public fun refill(
     task: &mut nexus_scheduler::task::Task,
     funds: sui::coin::Coin<sui::sui::SUI>,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Refills an Agent funded Task reserve and advertises restored work.
-public native fun refill_from_agent(
+public fun refill_from_agent(
     task: &mut nexus_scheduler::task::Task,
     agent: &mut nexus_interface::agent::Agent,
     amount: u64,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Expires exactly the advertised occurrence.
-public native fun expire(
+public fun expire(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     task: &mut nexus_scheduler::task::Task,
     expected_occurrence_id: u64,
     clock: &sui::clock::Clock,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Expires the advertised occurrence and consumes its leader submission gas charge.
-public native fun expire_with_gas_charge(
+public fun expire_with_gas_charge(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     task: &mut nexus_scheduler::task::Task,
     leader_registry: &nexus_registry::leader::LeaderRegistry,
@@ -292,7 +333,9 @@ public native fun expire_with_gas_charge(
     gas_charge: u64,
     clock: &sui::clock::Clock,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Admits exactly one accepted occurrence into a funded protocol obligation.
 ///
@@ -300,7 +343,7 @@ public native fun expire_with_gas_charge(
 /// its contract, Agent skill revision, policies, leader, DAG, authorization, and
 /// funding before [`DAGExecution`] creation. A later WorkAdmission disable does
 /// not revoke an occurrence whose scheduling transaction already succeeded.
-public native fun admit_next(
+public fun admit_next(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     task: &mut nexus_scheduler::task::Task,
     dag: &nexus_interface::dag::DAG,
@@ -314,14 +357,16 @@ public native fun admit_next(
     gas_charge: u64,
     clock: &sui::clock::Clock,
     ctx: &mut sui::tx_context::TxContext,
-): nexus_workflow::execution::DAGExecution;
+): nexus_workflow::execution::DAGExecution {
+    abort ELocalExecutionUnavailable
+}
 
 /// Commits a proven permanent rejection and makes the reserve reclaimable.
 ///
 /// An abort cannot represent rejection because it would roll back the Task
 /// transition and any charge. Only the selected current leader may commit this
 /// transition, and the reason is derived entirely from onchain state.
-public native fun reject_next(
+public fun reject_next(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     task: &mut nexus_scheduler::task::Task,
     dag: &nexus_interface::dag::DAG,
@@ -334,59 +379,86 @@ public native fun reject_next(
     gas_charge: u64,
     clock: &sui::clock::Clock,
     ctx: &mut sui::tx_context::TxContext,
-): nexus_scheduler::task::TaskRejectionReason;
+): nexus_scheduler::task::TaskRejectionReason {
+    abort ELocalExecutionUnavailable
+}
 
 /// Settles one execution back into its owning Task.
-public native fun settle(
+public fun settle(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     task: &mut nexus_scheduler::task::Task,
     execution: &mut nexus_workflow::execution::DAGExecution,
     clock: &sui::clock::Clock,
-): SettlementStatus;
+): SettlementStatus {
+    abort ELocalExecutionUnavailable
+}
 
 /// Finalizes an address controlled [`Task`] and refunds its recorded source.
-public native fun close(
-    task: &mut nexus_scheduler::task::Task,
-    ctx: &mut sui::tx_context::TxContext,
-);
+public fun close(task: &mut nexus_scheduler::task::Task, ctx: &mut sui::tx_context::TxContext) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Finalizes an Agent controlled [`Task`] and refunds its vault.
-public native fun close_as_agent(
+public fun close_as_agent(
     task: &mut nexus_scheduler::task::Task,
     agent: &mut nexus_interface::agent::Agent,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the default continue behavior.
-public native fun continue_on_failure(): nexus_scheduler::task::FailureMode;
+public fun continue_on_failure(): nexus_scheduler::task::FailureMode {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns explicit pause behavior.
-public native fun pause_on_failure(): nexus_scheduler::task::FailureMode;
+public fun pause_on_failure(): nexus_scheduler::task::FailureMode {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether a failure mode continues.
-public native fun is_continue(mode: nexus_scheduler::task::FailureMode): bool;
+public fun is_continue(mode: nexus_scheduler::task::FailureMode): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the advertised occurrence.
-public native fun advertised_occurrence(
+public fun advertised_occurrence(
     task: &nexus_scheduler::task::Task,
-): std::option::Option<nexus_scheduler::schedule::Occurrence>;
+): std::option::Option<nexus_scheduler::schedule::Occurrence> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether no future occurrence exists.
-public native fun is_idle(task: &nexus_scheduler::task::Task): bool;
+public fun is_idle(task: &nexus_scheduler::task::Task): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether the skill occurrence quota is exhausted.
-public native fun is_exhausted(task: &nexus_scheduler::task::Task): bool;
+public fun is_exhausted(task: &nexus_scheduler::task::Task): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether one occurrence cannot currently be funded.
-public native fun is_awaiting_funds(task: &nexus_scheduler::task::Task): bool;
+public fun is_awaiting_funds(task: &nexus_scheduler::task::Task): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether the Task may be closed.
-public native fun can_close(task: &nexus_scheduler::task::Task): bool;
+public fun can_close(task: &nexus_scheduler::task::Task): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether settlement is pending.
-public native fun settlement_is_pending(status: SettlementStatus): bool;
+public fun settlement_is_pending(status: SettlementStatus): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether settlement succeeded.
-public native fun settlement_is_succeeded(status: SettlementStatus): bool;
+public fun settlement_is_succeeded(status: SettlementStatus): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether settlement failed.
-public native fun settlement_is_failed(status: SettlementStatus): bool;
+public fun settlement_is_failed(status: SettlementStatus): bool {
+    abort ELocalExecutionUnavailable
+}

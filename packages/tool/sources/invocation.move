@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_tool::invocation`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_tool::invocation;
 
-//! Interface for [`nexus_tool::invocation`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Typed reserve key for policy witness [P].
 public struct ReserveKey<phantom P: drop>() has copy, drop, store;
@@ -26,17 +34,19 @@ public struct Invocation has key {
 }
 
 /// Consumes a canonical request and creates one Invocation under policy [P].
-public native fun new_invocation<P: drop>(
+public fun new_invocation<P: drop>(
     cashier: &nexus_tool::tool_cashier::ToolCashier,
     request: nexus_interface::payment::InvocationRequest,
     _: P,
     sources: vector<sui::object::ID>,
     amount: u64,
     ctx: &mut sui::tx_context::TxContext,
-): Invocation;
+): Invocation {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates one Invocation carrying the exact policy reserve restored on refund.
-public native fun new_invocation_with_reserve<P: drop, R: store>(
+public fun new_invocation_with_reserve<P: drop, R: store>(
     cashier: &nexus_tool::tool_cashier::ToolCashier,
     request: nexus_interface::payment::InvocationRequest,
     policy: P,
@@ -45,89 +55,122 @@ public native fun new_invocation_with_reserve<P: drop, R: store>(
     sources: vector<sui::object::ID>,
     amount: u64,
     ctx: &mut sui::tx_context::TxContext,
-): Invocation;
+): Invocation {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the object ID of [Invocation].
-public native fun id(self: &Invocation): sui::object::ID;
+public fun id(self: &Invocation): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the execution authorized by [Invocation].
-public native fun execution_id(self: &Invocation): address;
+public fun execution_id(self: &Invocation): address {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the runtime vertex key authorized by [Invocation].
-public native fun vertex_key(self: &Invocation): vector<u8>;
+public fun vertex_key(self: &Invocation): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the Tool authorized by [Invocation].
-public native fun tool(self: &Invocation): sui::object::ID;
+public fun tool(self: &Invocation): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the cashier selected by [Invocation].
-public native fun cashier(self: &Invocation): sui::object::ID;
+public fun cashier(self: &Invocation): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the payment source eligible for [Invocation].
-public native fun beneficiary(self: &Invocation): nexus_interface::payment::PaymentSourceKind;
+public fun beneficiary(self: &Invocation): nexus_interface::payment::PaymentSourceKind {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the address that receives a policy reserve after refund.
-public native fun refund_address(self: &Invocation): address;
+public fun refund_address(self: &Invocation): address {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the policy witness type that created [Invocation].
-public native fun policy(self: &Invocation): std::type_name::TypeName;
+public fun policy(self: &Invocation): std::type_name::TypeName {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the exact economic sources used by [Invocation].
-public native fun sources(self: &Invocation): vector<sui::object::ID>;
+public fun sources(self: &Invocation): vector<sui::object::ID> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the SUI obligation selected by [Invocation].
-public native fun amount(self: &Invocation): u64;
+public fun amount(self: &Invocation): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Places [Invocation] under its execution after consuming its exact lock receipt.
-public native fun place(
-    invocation: Invocation,
-    receipt: nexus_interface::payment::InvocationLockReceipt,
-);
+public fun place(invocation: Invocation, receipt: nexus_interface::payment::InvocationLockReceipt) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Receives an [Invocation] owned by its execution.
-public native fun receive(
+public fun receive(
     execution: &mut sui::object::UID,
     receiving: sui::transfer::Receiving<Invocation>,
-): Invocation;
+): Invocation {
+    abort ELocalExecutionUnavailable
+}
 
 /// Receives a refunded [Invocation] at its recorded policy account.
-public native fun receive_refund(
+public fun receive_refund(
     account: &mut sui::object::UID,
     receiving: sui::transfer::Receiving<Invocation>,
-): Invocation;
+): Invocation {
+    abort ELocalExecutionUnavailable
+}
 
 /// Resolves [Invocation] using the exact terminal receipt from its payment.
 ///
 /// Finalization joins the recorded SUI and sends the completed Invocation to
 /// its cashier. Refund sends a reserved Invocation to its beneficiary or
 /// destroys an Invocation with no reserved resource.
-public native fun resolve(
+public fun resolve(
     invocation: Invocation,
     paid: sui::balance::Balance<sui::sui::SUI>,
     receipt: nexus_interface::payment::InvocationSettlementReceipt,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Receives completed Invocations created by configless policy witness [P].
-public native fun collect<P: drop>(
+public fun collect<P: drop>(
     cashier: &mut nexus_tool::tool_cashier::ToolCashier,
     owner_cap: &nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_tool::tool_cashier::OverToolCashier,
     >,
     _: P,
     invocations: vector<sui::transfer::Receiving<Invocation>>,
-): sui::balance::Balance<sui::sui::SUI>;
+): sui::balance::Balance<sui::sui::SUI> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Receives completed Invocations and returns their exact policy reserves.
-public native fun collect_with_reserve<P: drop, R: store>(
+public fun collect_with_reserve<P: drop, R: store>(
     cashier: &mut nexus_tool::tool_cashier::ToolCashier,
     owner_cap: &nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_tool::tool_cashier::OverToolCashier,
     >,
     _: P,
     invocations: vector<sui::transfer::Receiving<Invocation>>,
-): (sui::balance::Balance<sui::sui::SUI>, vector<R>);
+): (sui::balance::Balance<sui::sui::SUI>, vector<R>) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Recovers the exact policy reserve from a refunded [Invocation].
 ///
 /// An Invocation has no [store] ability, so only the address that received the
 /// refund can supply it and only this function can unpack it.
-public native fun claim_refund<P: drop, R: store>(invocation: Invocation, _: P): R;
+public fun claim_refund<P: drop, R: store>(invocation: Invocation, _: P): R {
+    abort ELocalExecutionUnavailable
+}

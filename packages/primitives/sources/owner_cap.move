@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_primitives::owner_cap`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_primitives::owner_cap;
 
-//! Interface for [`nexus_primitives::owner_cap`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// When you want to prove you own something.
 ///
@@ -47,58 +55,82 @@ public struct OwnerCap<phantom T> has drop, store {
 
 /// Creates a non cloneable ownership capability with a fresh unique ID.
 /// Anyone holding a reference to `T` can mint one.
-public native fun new_uncloneable<T>(_: &T, ctx: &mut sui::tx_context::TxContext): OwnerCap<T>;
+public fun new_uncloneable<T>(_: &T, ctx: &mut sui::tx_context::TxContext): OwnerCap<T> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates cloneable authority over `what_for` from a consumable role witness.
-public native fun new_cloneable_drop<T: drop>(
+public fun new_cloneable_drop<T: drop>(
     witness: T,
     what_for: &sui::object::UID,
     ctx: &mut sui::tx_context::TxContext,
-): CloneableOwnerCap<T>;
+): CloneableOwnerCap<T> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates cloneable authority over an object after verifying its UID.
-public native fun new_cloneable_key<T: key>(
+public fun new_cloneable_key<T: key>(
     object: &T,
     its_uid: &sui::object::UID,
     ctx: &mut sui::tx_context::TxContext,
-): CloneableOwnerCap<T>;
+): CloneableOwnerCap<T> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates a new [CloneableOwnerCap] with the same `what_for`.
-public native fun clone<T>(
+public fun clone<T>(
     cap: &CloneableOwnerCap<T>,
     ctx: &mut sui::tx_context::TxContext,
-): CloneableOwnerCap<T>;
+): CloneableOwnerCap<T> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates N new [CloneableOwnerCap]s with the same `what_for`.
-public native fun clone_n<T>(
+public fun clone_n<T>(
     cap: &CloneableOwnerCap<T>,
     n: u64,
     ctx: &mut sui::tx_context::TxContext,
-): vector<CloneableOwnerCap<T>>;
+): vector<CloneableOwnerCap<T>> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates a new [CloneableOwnerCap] with the same `what_for` and transfers it to the
 /// given address.
-public native fun clone_for_receiver<T>(
+public fun clone_for_receiver<T>(
     cap: &CloneableOwnerCap<T>,
     receiver: address,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Destroys a cloneable capability and drops its inner authority token.
-public native fun destroy<T>(self: CloneableOwnerCap<T>);
+public fun destroy<T>(self: CloneableOwnerCap<T>) {
+    abort ELocalExecutionUnavailable
+}
 
 /// The capability's unique ID.
-public native fun id<T>(self: &OwnerCap<T>): sui::object::ID;
+public fun id<T>(self: &OwnerCap<T>): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// The ID of the resource this capability owns.
-public native fun what_for<T>(self: &CloneableOwnerCap<T>): sui::object::ID;
+public fun what_for<T>(self: &CloneableOwnerCap<T>): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Whether this capability owns the given object.
-public native fun is_for<T, U: key>(self: &CloneableOwnerCap<T>, what: &U): bool;
+public fun is_for<T, U: key>(self: &CloneableOwnerCap<T>, what: &U): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Whether this capability owns the resource with the given ID.
-public native fun is_for_id<T>(self: &CloneableOwnerCap<T>, what_id: sui::object::ID): bool;
+public fun is_for_id<T>(self: &CloneableOwnerCap<T>, what_id: sui::object::ID): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Borrows the inner non cloneable `OwnerCap` for APIs that care about authority identity but not resource binding.
 /// This provides the same view style pattern used to expose narrower coin or balance capabilities.
-public native fun as_ref<T>(self: &CloneableOwnerCap<T>): &OwnerCap<T>;
+public fun as_ref<T>(self: &CloneableOwnerCap<T>): &OwnerCap<T> {
+    abort ELocalExecutionUnavailable
+}
