@@ -1,66 +1,130 @@
-# TAP development and testing
+# Develop and test a TAP application
 
-This guide takes a TAP from an empty project to local unit tests and then to a
-Testnet integration run. It also explains exactly what each check proves, so a
-passing test is never mistaken for stronger evidence than it provides.
+This guide shows how to build an embedded Talus Agent Package, test its full
+application controlled lifecycle locally and then verify the network boundary
+on Testnet. Every command maps to the executable application in
+[`examples/local_testing`](../examples/local_testing).
 
-## What a TAP contains
+## The result
 
-A Talus Agent Package, or TAP, defines application logic and an agent skill
-that uses Nexus. In the Nexus CLI project layout, one TAP project contains:
+By the end, the application has:
+
+1. Shared Move state that owns an embedded Nexus Agent.
+2. A DAG constructed by the application and fixed to one onchain Tool.
+3. An Agent skill bound to that DAG.
+4. A public function that funds the Agent and another that schedules work.
+5. A Tool module with the `execute` ABI called by Nexus.
+6. Workflow authorization bound to application state.
+7. Unit tests for setup, scheduling, payment, authorization, callback output,
+   state changes, input tampering and Task cleanup.
+8. A Testnet path for publication, Tool registration, live scheduling and
+   result inspection.
+
+## First choose the application form
+
+A TAP is an application or skill that runs work through Nexus. There are two
+valid forms, and their deployment flow is different.
 
 <!-- markdownlint-disable MD013 -->
 
-| Path | Role |
-| --- | --- |
-| `tap/Move.toml` | Move package manifest and Nexus dependencies |
-| `tap/sources/` | TAP owned Move modules |
-| `tap/tests/` | Unit tests and test module extensions |
-| `dag.json` | Nexus DAG and Tool bindings |
-| `skill.tap.json` | Skill requirements, payment policy, schedule policy, and DAG path |
+| Question | Standard CLI skill | Embedded application |
+| --- | --- | --- |
+| Who owns the Agent? | A user address | Application state |
+| Where is the DAG declared? | `dag.json` | Move code |
+| Where are skill requirements declared? | `skill.tap.json` | Move code |
+| Who schedules the Task? | Standard Nexus CLI commands | An application Move function |
+| Typical starting point | `nexus tap scaffold` | The complete example in this repository |
 
 <!-- markdownlint-enable MD013 -->
 
-The Move package is where a TAP author owns behavior and state. The DAG tells
-Nexus which Tools form the workflow. The skill configuration binds that DAG to
-the rules used when the skill is registered for an agent.
+Use the standard form when the CLI should own the entire Agent lifecycle. Use
+the embedded form when a product object must control authorization, funds,
+state and scheduling as one application.
 
-## Fast path
+This guide focuses on the embedded form. It intentionally has no `dag.json` or
+`skill.tap.json`; adding those files would create a second source of truth.
 
-Create a project:
+## Prerequisites
 
-```sh
-nexus tap scaffold --name content-review
-cd content-review
-```
-
-Run its Move unit tests with the Nexus Testnet implementation:
+For local development, install a Sui CLI compatible with the toolchain recorded
+in each Nexus `Published.toml` file and a Nexus CLI release that contains
+`nexus tap test`. Confirm both commands before writing the TAP:
 
 ```sh
-nexus tap test --path tap
+sui --version
+nexus --version
+nexus tap test --help
 ```
 
-Validate the local package, DAG, and skill configuration:
+Local unit tests need network access to read public package records and
+bytecode. They do not need a wallet, private key, SUI or US collateral.
 
-```sh
-nexus tap validate-skill --config skill.tap.json
+The Testnet walkthrough additionally needs a funded Sui address, the same
+signer configured in the Nexus CLI and an owned `Coin<US>` for Tool collateral.
+Those assets are used only after local acceptance passes.
+
+## Understand the module boundary
+
+An embedded TAP normally contains at least two modules:
+
+```text
+application.move
+    owns ApplicationState and Agent
+    creates and binds the DAG
+    schedules and closes Tasks
+    implements protected business behavior
+
+review_vertex.move
+    declares Output
+    exposes public fun execute
+    verifies the exact Tool inputs
+    consumes workflow authorization
+    calls the application behavior
+    finalizes the Nexus Tool result
 ```
 
-These commands do not publish anything. `nexus tap test` needs network access
-to resolve package records and download Nexus bytecode, but it does not need a
-wallet, private key, or gas.
+The application module does not need a universal `execute` function. Nexus
+calls `execute` on each module registered as an onchain Tool. A TAP with three
+onchain Tool vertices can have three Tool modules and three callback functions,
+all operating on the same application state.
 
-Before publication, replace the example Tool name in `dag.json` with a Tool
-that is registered on the selected network. Check it with:
+The complete local and network flow is:
 
-```sh
-nexus tool inspect --tool-fqn example.publisher.tool@1
+```text
+publish package
+      |
+      v
+init shares ApplicationState with embedded Agent
+      |
+      v
+register review_vertex as a workflow authorized Tool
+      |
+      v
+application::setup_agent creates DAG and registers skill
+      |
+      v
+application::fund_agent deposits SUI
+      |
+      v
+application::schedule_review creates Task and grant
+      |
+      v
+Nexus admits and walks the Task
+      |
+      v
+review_vertex::execute authenticates and finalizes output
+      |
+      v
+application::close_review returns unused reserve
 ```
 
-## Choose direct Nexus dependencies
+## Declare dependencies
 
-Declare every Nexus package imported by TAP source or test source. MVR resolves
-the remaining graph.
+Move requires every directly imported package to be declared. An embedded
+application that schedules a Task imports the public runtime authority type
+from `nexus_kernel` in addition to the MVR packages.
+
+<!-- markdownlint-disable MD013 -->
 
 ```toml
 [package]
@@ -70,516 +134,757 @@ edition = "2024.alpha"
 
 [dependencies]
 nexus_interface = { r.mvr = "@talus/nexus-interface" }
+nexus_kernel = { git = "https://github.com/Talus-Network/nexus-move-packages", subdir = "packages/kernel", rev = "testnet/v1" }
 nexus_primitives = { r.mvr = "@talus/nexus-primitives" }
+nexus_registry = { r.mvr = "@talus/nexus-registry" }
 nexus_scheduler = { r.mvr = "@talus/nexus-scheduler" }
+nexus_tool = { r.mvr = "@talus/nexus-tool" }
 ```
-
-Use `edition = "2024.alpha"` when a test uses `extend module`. Module
-extensions are currently gated by that edition. A package without extensions
-can use `edition = "2024"`.
-
-The packages in this repository are source interfaces. They expose type
-layouts and supported function signatures so a TAP can compile. They do not
-contain the private Nexus implementation.
-
-## The local test model
-
-The four common commands answer different questions:
-
-<!-- markdownlint-disable MD013 -->
-
-| Command | Implementation that runs | Main question answered |
-| --- | --- | --- |
-| `sui move build --build-env testnet` | No function execution | Does the TAP compile against Testnet addresses and interfaces? |
-| `sui move test --build-env testnet` | Local interface stub bodies | Does code that never calls Nexus work with the source interfaces? |
-| `nexus tap test --path tap` | Published Nexus Testnet bytecode | Does the TAP work with the current Testnet Nexus implementation in a local VM? |
-| Testnet transaction | Published packages and live Testnet objects | Does the real transaction work with network state, routing, gas, and services? |
 
 <!-- markdownlint-enable MD013 -->
 
-For TAP tests that call Nexus, use `nexus tap test`. A direct `sui move test`
-command executes the interface stub bodies, so those calls intentionally
-abort.
+`nexus_kernel` currently has no public MVR name. Pin the repository revision
+that belongs to the Nexus release you consume. The complete example uses local
+paths because it lives inside the interface repository.
 
-### What `nexus tap test` does
+Use `edition = "2024.alpha"` when unit tests use `extend module`. The extension
+syntax is gated by that edition. Production source can still use normal Move
+2024 syntax.
 
-The command performs this sequence in memory:
-
-```text
-MVR records and Move.toml
-            |
-            v
-compile TAP source, tests, and public Nexus interfaces
-            |
-            +---- identify functions declared in test module extensions
-            |
-Sui RPC ----+---- download the resolved published Nexus modules
-            |
-            v
-append only the developer test functions to matching published modules
-            |
-            v
-verify the resulting modules and run the Sui Move unit test VM
-```
-
-Existing Nexus function definitions are never replaced. Their bytecode is the
-bytecode fetched from the package selected by MVR for the requested
-environment. The added test functions exist only for this process, and the
-resulting modules are marked as not publishable.
-
-For every declaration used by an extension, the linker checks module identity,
-function signatures, type abilities, struct layouts, and enum layouts. It then
-verifies each complete bytecode module. A stale interface or a fixture that
-attempts to redefine Nexus behavior fails before the suite runs.
-
-## Write a complete unit test flow
-
-A useful TAP test should cover a behavior boundary, not only one getter. The
-complete example in [`examples/local_testing`](../examples/local_testing)
-follows this sequence:
-
-1. Create the TAP schema with published Nexus functions.
-2. Validate the schema with the published Nexus validator.
-3. Create TAP owned state with a test transaction context.
-4. Convert raw input to canonical `NexusData` with published constructors.
-5. Run the complete TAP owned decision.
-6. Validate the resulting `TaggedOutput` with published Nexus code.
-7. Assert the output payload and every relevant TAP state change.
-8. Destroy the TAP test state so resource leaks fail visibly.
-
-The central test looks like this:
-
-```move
-#[test]
-fun complete_flow_accepts_and_rejects_canonical_inputs() {
-    let ctx = &mut tx_context::dummy();
-    let schema = application::schema();
-    schema.assert_valid_for_tool(false);
-    let mut state = application::new(5, ctx);
-
-    let input = application::prepare_input(&schema, b"hello Nexus");
-    assert!(schema.conforms_complete_input(&vector[copy input]));
-
-    let output = application::review(&mut state, &input);
-    assert!(schema.conforms_raw_output(&output));
-    assert_eq!(*tagged_output::tag(&output), b"accepted");
-    assert_eq!(application::accepted_count(&state), 1);
-
-    application::destroy_for_testing(state);
-}
-```
-
-This is a real local execution of the TAP and the called Nexus functions. It
-does not approximate those Nexus functions with mocks.
-
-## Create only the fixtures a test needs
-
-Start with public Nexus constructors. Add a fixture only when normal TAP code
-cannot create or inspect the required value. Common reasons are private
-fields, private enum variants, object identity, or deliberately invalid state
-needed for an error path.
-
-A test module extension shares the scope of the module it extends. For
-example, Nexus has an internal test helper that creates an unchecked
-`NexusData::Many`. That helper is absent from published bytecode because it is
-test code. A TAP author can recreate the same small fixture:
-
-```move
-#[test_only]
-extend module nexus_primitives::data;
-
-/// Creates invalid data so a TAP can verify its rejection path.
-public fun unchecked_many_for_testing(values: vector<NexusValue>): NexusData {
-    NexusData::Many { values }
-}
-```
-
-Use it from the TAP test through the original module name:
-
-```move
-#[test]
-fun extension_fixture_exercises_invalid_input_path() {
-    let schema = application::schema();
-    let malformed = data::unchecked_many_for_testing(vector[]);
-
-    assert!(!schema.conforms_complete_input(&vector[malformed]));
-}
-```
-
-The fixture constructs state. The assertion still calls the exact published
-Nexus implementation.
-
-### Fixture rules
-
-1. Put extensions under `tests/` and annotate each one with `#[test_only]`.
-2. Keep one extension per Nexus module and collect that module's helpers in one
-   file.
-3. Name helpers with `_for_testing`.
-4. Prefer direct construction, focused observation, and cleanup helpers.
-5. Call published Nexus functions for behavior. Do not copy protocol behavior
-   into a fixture.
-6. Construct the smallest valid state that reaches the behavior under test.
-7. Also construct deliberately invalid state when a rejection path matters.
-8. Never redefine an existing Nexus function. The CLI rejects this.
-
-Extensions can call published Nexus functions and can call extensions added to
-other Nexus modules. The example demonstrates both cases.
-
-### Why Nexus does not ship every fixture
-
-Fixture needs are application specific. A protocol fixture library would need
-to predict every object state, capability arrangement, and failure case that a
-TAP author may need. It would also become a second API that Nexus must maintain.
-
-Developer owned extensions avoid that problem. The public interfaces describe
-the available shapes. Each TAP creates only the setup, inspection, and cleanup
-needed by its own tests.
-
-Published Nexus `#[test_only]` functions are not available because Sui removes
-them before package publication. Bytecode download cannot recover code that
-was never published. Recreate the outcome of a small setup helper through an
-extension. If a private helper contains protocol behavior, arrange its inputs
-with an extension and exercise a supported published function instead.
-
-## Reproduce the structure of an internal test
-
-TAP tests can use the same arrange, act, assert, and cleanup structure as Nexus
-internal examples. The source of each piece changes as follows:
-
-<!-- markdownlint-disable MD013 -->
-
-| Internal test element | TAP developer equivalent |
-| --- | --- |
-| TAP module function | Call the developer owned function directly. The TAP source is available. |
-| Public Nexus function | Call it directly. `nexus tap test` supplies its published body. |
-| Nexus helper that only constructs private state | Recreate the required value in a test module extension. |
-| Nexus helper that only reads private state | Add a focused view in a test module extension. |
-| Nexus helper that destroys fixture state | Add a focused cleanup function in a test module extension. |
-| Nexus helper that performs protocol behavior | Arrange its input state, then call the supported published behavior instead of copying it. |
-| TAP object used across transactions | Use `sui::test_scenario` and the same ownership mode as production. |
-| Current shared protocol object from a live deployment | Exercise it on Testnet, unless the unit suite deliberately constructs the complete equivalent state. |
-
-<!-- markdownlint-enable MD013 -->
-
-A full local protocol flow is possible when the test constructs every object
-and capability that the called functions require. This is the same principle
-used by internal Move tests. The extension mechanism removes the private field
-barrier, but it does not invent state. The TAP author remains responsible for
-arranging a coherent fixture.
-
-When fixture setup becomes larger than the TAP behavior being tested, keep the
-TAP decision and transformation tests local and move the live object lifecycle
-to Testnet. That split keeps unit tests fast and readable without weakening the
-network acceptance check.
-
-## Test stateful object flows
-
-Use `tx_context::dummy()` when one transaction context is enough. This keeps a
-test compact and is appropriate for owned values and direct function calls.
-
-Use `sui::test_scenario` when sender changes, ownership changes, shared objects,
-or several transaction boundaries are part of TAP behavior. A scenario test
-should follow the same structure as a normal transaction sequence:
-
-1. Begin with the first sender.
-2. Create and transfer or share TAP objects.
-3. Advance with `next_tx`.
-4. Take each object with the ownership mode used by production code.
-5. Run the TAP action and return objects that remain live.
-6. Advance again and assert durable state.
-7. Consume or delete every owned test resource.
-8. End the scenario.
-
-The scenario simulates Sui object ownership inside the unit VM. It still does
-not reproduce validators, consensus, live shared object versions, or gas
-selection.
-
-## Test success, rejection, and invariants
-
-For every material TAP action, cover:
-
-| Case | Suggested assertion |
-| --- | --- |
-| Valid input | Result payload, TAP state, and Nexus output conformance |
-| Boundary input | Minimum and maximum accepted values |
-| Invalid shape | Rejection result or expected abort |
-| Wrong authority | Expected abort at the responsible module |
-| Repeated action | Idempotence or explicit duplicate rejection |
-| Resource exit | All owned resources consumed, returned, or deleted |
-
-Use an exact error constant when the interface exposes it:
-
-```move
-#[test, expected_failure(
-    abort_code = my_tap::application::EInvalidInput,
-    location = my_tap::application,
-)]
-fun invalid_input_is_rejected() {
-    application::submit_invalid_input();
-}
-```
-
-Some Nexus error constants are private. In that case, assert the Move abort
-status and module location:
-
-```move
-#[test, expected_failure(
-    major_status = 4016,
-    location = nexus_primitives::data,
-)]
-fun empty_collection_is_rejected() {
-    data::many(vector[]);
-}
-```
-
-The second form proves that a Move abort came from the expected Nexus module.
-It does not distinguish two private abort reasons in that module.
-
-## Run and focus a suite
-
-Run all tests against Testnet Nexus bytecode:
+Build for the same environment that you plan to use:
 
 ```sh
+sui move build --path tap --build-env testnet --warnings-are-errors
+```
+
+The build environment selects package records and addresses. It does not make
+the compiler execute network code.
+
+## Define application state
+
+The example stores the Agent inside the shared product object:
+
+```move
+public struct ApplicationState has key, store {
+    id: UID,
+    dag_id: ID,
+    skill_id: option::Option<u64>,
+    agent: Agent,
+    pending_task_id: option::Option<ID>,
+    accepted_count: u64,
+    rejected_count: u64,
+}
+```
+
+This structure encodes the important invariants:
+
+1. The application has one Agent identity.
+2. Setup records one immutable DAG and one registered skill.
+3. Only one review Task may be pending.
+4. The same state UID is the Tool witness and authorization recipient.
+5. The Tool callback is the only package function that changes review counts.
+
+`init` creates and shares this state when the TAP package is published. The
+embedded Agent becomes registered later because Tool registration must happen
+first.
+
+## Create the Agent, DAG and skill
+
+`application::setup_agent` performs one atomic setup path:
+
+1. Attach the embedded Agent to the live `AgentRegistry`.
+2. Create a DAG with one vertex named `review`.
+3. Bind that vertex to `example.taluslabs.content_review@1`.
+4. Declare ports `0` and `1` as DAG entry ports.
+5. Register an Agent funded, schedule once skill with a fixed Tool.
+6. Record the DAG and skill identities in application state.
+7. Finalize the DAG so runtime behavior cannot change after registration.
+
+The FQN is part of the application contract. Replace the example value with a
+unique FQN before publishing and use that exact value during Tool registration.
+
+Keeping DAG construction in Move has one major benefit: the application code,
+skill binding and state transition are reviewed and tested together. It also
+means `nexus tap validate-skill` is not applicable to this form because there
+is no JSON skill configuration to validate.
+
+## Schedule application work
+
+`application::schedule_review` creates the runtime input and schedules a Task
+from the embedded Agent vault.
+
+The execution config contains:
+
+<!-- markdownlint-disable MD013 -->
+
+| Field | Example value | Why it matters |
+| --- | --- | --- |
+| Agent ID | Embedded Agent object ID | Selects the registered skill owner |
+| Network ID | Current Nexus network | Selects the execution network |
+| Entry group | Default group | Selects the DAG entry set |
+| Port `0` | `ApplicationState` object value | Gives `execute` mutable product state |
+| Port `1` | One data value per content byte | Gives `execute` the review content |
+| Skill ID | ID saved during setup | Selects the registered DAG and policies |
+| Authorization binding | `review` to application state ID | Makes the state UID the only grant recipient |
+
+<!-- markdownlint-enable MD013 -->
+
+The production function calls published Nexus code to create the Agent Task,
+reserve funds, advertise the occurrence and share the Task. It returns an owned
+`TaskPointer` so the caller can discover the shared Task.
+
+The example uses a 0.7 SUI occurrence reserve and an Agent policy maximum of
+1.5 SUI. Treat those as example Testnet values. Choose real budgets from
+measured execution cost and the Tool invocation policy.
+
+## Implement the Tool callback
+
+The registered Tool module exposes:
+
+```move
+public fun execute(
+    authorization: ProvenValue<AgentVertexAuthorization>,
+    requirements: UIDRequirements,
+    result: OnchainToolResult,
+    state: &mut ApplicationState,
+    content: vector<u8>,
+    ctx: &mut TxContext,
+)
+```
+
+The argument groups have different owners:
+
+<!-- markdownlint-disable MD013 -->
+
+| Arguments | Supplied by | Responsibility |
+| --- | --- | --- |
+| `authorization`, `requirements`, `result` | Nexus workflow | Prove this exact execution may invoke the Tool and track required object stamps |
+| `state`, `content` | DAG input ports in position order | Carry the concrete application input |
+| `ctx` | Sui transaction | Create and share the final result |
+
+<!-- markdownlint-enable MD013 -->
+
+The callback performs four checks and effects in order:
+
+1. Recompute the canonical input commitment from `state` and `content`.
+2. Require it to equal the commitment carried by the Nexus result.
+3. Consume the Agent grant as the application state recipient and update state.
+4. Satisfy the state witness and let Nexus finalize and share the result.
+
+Do not skip the first check. Authorization for one committed input must not be
+usable with a different concrete value.
+
+The public `Output` enum declares the Tool output schema:
+
+```move
+public enum Output {
+    Accepted { length: u64 },
+    Rejected { minimum_length: u64 },
+}
+```
+
+The callback returns `TaggedOutput` variants named `accepted` and `rejected`
+with matching fields. The Nexus CLI reads both `execute` and `Output` from the
+published module when registering the Tool.
+
+## Run local unit tests with published bytecode
+
+Run the complete suite:
+
+```sh
+cd examples/local_testing
 nexus tap test --path tap
 ```
 
-List discovered tests without running them:
+The command does the following in memory:
+
+```text
+Move.toml and package records
+            |
+            v
+compile TAP source, tests and public Nexus interfaces
+            |
+            +--> identify functions in test module extensions
+            |
+Sui RPC ----+--> download resolved published Nexus modules
+            |
+            v
+append only new developer test functions
+            |
+            v
+verify every linked module and run the Sui Move unit VM
+```
+
+Existing Nexus functions are never replaced. For every interface item linked
+into the test suite, the CLI checks module identity, function signatures, type
+abilities, struct layouts and enum layouts. It then runs the bytecode verifier
+on every complete module. An extension targeting a wrong release or redefining
+a published function fails before any test runs.
+
+No wallet, signer or gas is needed. Network access is needed to resolve package
+records and read public chain bytecode.
+
+Useful development commands:
 
 ```sh
 nexus tap test --path tap --list
-```
-
-Run tests whose full name contains a value:
-
-```sh
-nexus tap test --path tap complete_flow
-```
-
-Set the number of test threads:
-
-```sh
-nexus tap test --path tap --threads 1
-```
-
-Check Mainnet compatibility before a Mainnet release:
-
-```sh
+nexus tap test --path tap setup_binds
+nexus tap test --path tap execute_accepts --threads 1
 nexus tap test --path tap --build-env mainnet
 ```
 
-Testnet and Mainnet can contain different package versions. Run the suite for
-the same environment that will receive the TAP.
+Use a filter to shorten a feedback loop, then run the unfiltered suite before
+commit. Use `--threads 1` when failure ordering or event output matters.
 
-## What local unit tests can prove
+### Why direct `sui move test` is different
 
-With suitable developer fixtures, a local suite can prove:
-
-1. TAP owned functions, branching, errors, state changes, and cleanup.
-2. Calls to public Nexus functions using the selected published bytecode.
-3. Nexus type construction and validation that does not require unavailable
-   live state.
-4. TAP object flows modeled with `tx_context` or `test_scenario`.
-5. Interactions among several Nexus packages in one local VM.
-6. Expected Move aborts and module locations.
-7. Compatibility with the current Testnet or Mainnet Nexus package graph.
-
-A local suite cannot by itself prove:
-
-1. The contents or current versions of live Nexus shared objects.
-2. Package publication, upgrade, or dependency routing in a submitted
-   transaction.
-3. Gas budget, coin selection, validator execution, consensus, or congestion.
-4. Leader selection and other behavior that depends on current network state.
-5. Offchain Tool availability, HTTP behavior, signatures, or timeouts.
-6. Indexer, event subscription, RPC, or client serialization behavior.
-7. A complete workflow that depends on state the test did not construct.
-
-The practical rule is simple: unit test all deterministic TAP behavior and all
-reachable Nexus behavior locally. Use Testnet for the first assertion that
-depends on live state or a submitted transaction.
-
-## Testnet integration path
-
-Testnet is the next evidence layer, not a replacement for unit tests.
-
-### 1. Build and validate
+The source packages in this repository contain interface bodies that abort
+when called locally. Therefore:
 
 ```sh
-sui move build --path tap --build-env testnet
-nexus tap test --path tap
-nexus tap validate-skill --config skill.tap.json
+sui move test --path tap --build-env testnet
 ```
 
-Confirm every Tool referenced by `dag.json` is registered on Testnet:
+is suitable only for TAP tests that never call Nexus. It is not a substitute
+for `nexus tap test`.
+
+## Construct test state without Nexus source
+
+Published packages do not contain Nexus `#[test_only]` functions because Sui
+removes them before publication. Downloading bytecode cannot recover code that
+was never published.
+
+Use this order when arranging a unit test:
+
+1. Call a public constructor when one exists.
+2. Add a small module extension when a private field or variant blocks fixture
+   construction.
+3. Recreate only the state outcome of a removed setup helper.
+4. Call the exact published Nexus function for every behavior under test.
+5. Add a focused view or cleanup helper only when the public interface has no
+   equivalent.
+
+For example:
+
+```move
+#[test_only]
+extend module nexus_registry::era;
+
+/// Constructs the Registry storage witness used by local deployment state.
+public fun v1_for_testing(): V1 {
+    V1()
+}
+```
+
+### Fixture rules
+
+1. Put extensions under the TAP `tests/` directory.
+2. Mark every extension `#[test_only]`.
+3. Keep one extension for each target Nexus module.
+4. Give helper names a `_for_testing` suffix.
+5. Construct the smallest coherent state that reaches the behavior.
+6. Use extensions for state, observation and cleanup, not protocol behavior.
+7. Exercise both accepted and rejected inputs where the boundary matters.
+8. Never redefine an existing function.
+
+The example extensions create empty Registry roots, version witnesses, a local
+runtime authority and a mutable final DAG fixture. Tool registration, Agent
+attachment, skill registration, scheduling, authorization, finalization,
+cancellation and refund all run from published Nexus bytecode.
+
+## Test the application lifecycle
+
+The example suite uses one deliberate sequence.
+
+### 1. Setup
+
+The test constructs empty local Registry state, calls published Tool
+registration, runs the production application setup and checks:
+
+1. The embedded Agent was attached.
+2. The saved DAG ID matches the created DAG.
+3. The DAG is final.
+4. The skill uses schedule once policy.
+5. The skill is fixed to the intended Tool registry and FQN.
+
+### 2. Schedule and payment
+
+The test funds the embedded Agent and calls the production schedule path. It
+checks:
+
+1. The Task controller is the embedded Agent.
+2. The pointer and application state name the same Task.
+3. Exactly one vertex authorization grant exists.
+4. An occurrence is advertised.
+5. The expected reserve left the Agent vault.
+6. Cancel and close finalize the Task, clear application state and refund the
+   unused reserve.
+
+### 3. Callback and result
+
+The callback tests use the grant produced by that actual scheduled Task. They
+do not invent an unrelated authorization value.
+
+The fixture copies the Task grant, reads its Agent, skill, interface, DAG,
+vertex and Task identities, creates the execution worksheet and commits the
+concrete input. It then calls the production `review_vertex::execute` function.
+
+The assertions consume the shared `OnchainToolResult` through published Nexus
+code and verify:
+
+1. Execution, Leader, Tool witness and result stamps are all present.
+2. The output tag and payload match the public `Output` schema.
+3. The output digest is present.
+4. The intended sender receives the consumed output.
+5. Application counters changed exactly once.
+
+### 4. Authorization isolation
+
+The authorization negative test schedules a real Task for one application
+state, then calls the callback with a second state and a commitment that exactly
+matches that second state. The application rejects the call because the grant
+recipient remains bound to the original state UID. This separates recipient
+authorization from input integrity and proves both checks matter.
+
+### 5. Tampering
+
+The negative test commits one content value and calls `execute` with another.
+It expects the exact Tool module error. This proves the callback does not treat
+the grant alone as permission for arbitrary input.
+
+## Understand the deliberate runtime seam
+
+The local suite proves the full flow controlled by the TAP on both sides of the
+workflow runtime. It does not build a fake Leader network to admit and walk the
+Task.
+
+<!-- markdownlint-disable MD013 -->
+
+| Proven locally | Proved on Testnet |
+| --- | --- |
+| Application initialization and invariants | Package publication and dependency routing |
+| Tool schema compatible callback code | Live Tool registration and current shared versions |
+| Embedded Agent and skill binding | Leader selection and work admission |
+| Task creation and authorization grant | Actual workflow walk and settlement |
+| Payment reservation, cancel, close and refund | Gas selection, budget and congestion behavior |
+| Exact callback authorization and input commitment | RPC, indexer and event delivery |
+| Application state changes and final Nexus result | Offchain Tool and service availability |
+
+<!-- markdownlint-enable MD013 -->
+
+This is not a mock behavior compromise. The local column executes selected
+published Nexus functions. The Testnet column depends on current external
+state and belongs in an integration check.
+
+## Add tests for a real TAP
+
+For each protected application action, cover the cases that can change value,
+authority or resource ownership:
+
+<!-- markdownlint-disable MD013 -->
+
+| Case | Minimum assertion |
+| --- | --- |
+| Valid input | Output payload, all application state changes and result stamps |
+| Boundary input | Values immediately below, at and above each limit |
+| Different concrete input | Exact input commitment abort |
+| Wrong grant recipient | Authorization abort before state mutation |
+| Wrong Task or DAG | Application invariant abort |
+| Repeated setup | Explicit duplicate setup abort |
+| Concurrent pending action | Explicit pending Task abort or documented concurrency behavior |
+| Cancel and close | Task final state, local reference cleanup and payment refund |
+| Resource exit | Every owned resource consumed, transferred or deleted |
+
+<!-- markdownlint-enable MD013 -->
+
+Use `tx_context::dummy()` for a single transaction unit. Use
+`sui::test_scenario` when shared objects, sender changes or transaction
+boundaries are part of the assertion.
+
+Prefer exact errors:
+
+```move
+#[test, expected_failure(
+    abort_code = review_vertex::EInputCommitmentMismatch,
+    location = content_review::review_vertex,
+)]
+fun changed_input_is_rejected() {
+    // Arrange one commitment and call execute with different input.
+}
+```
+
+When an error constant is private, assert the abort status and module location.
+That proves which module rejected the call, but not which private error in that
+module occurred.
+
+## Run the Testnet integration
+
+Local success is the gate to Testnet, not a replacement for it. The following
+steps use placeholders beginning with `0x`. Replace every placeholder with the
+value from your environment.
+
+### 1. Prepare both clients
+
+Point the Sui CLI at Testnet and select the funded address that will publish
+the package:
 
 ```sh
-nexus tool inspect --tool-fqn example.publisher.tool@1
+sui client switch --env testnet
+sui client active-address
+sui client balance
 ```
 
-### 2. Check Nexus CLI configuration
-
-Configure a Testnet RPC URL, signer, and the current Nexus object map by
-following the public Nexus setup documentation. Then inspect the active
-configuration:
+Configure the Nexus CLI with the Testnet RPC URL and signer by following the
+[Nexus CLI setup guide]. The canonical Testnet RPC lets the CLI load the
+current Nexus object map automatically. Verify it before any write:
 
 ```sh
 nexus conf get --json
 ```
 
-Do not publish until the RPC and Nexus object map both target Testnet.
+Record these values from the `nexus` object in the output:
 
-### 3. Publish the TAP package and DAG
+```text
+agent_registry.object_id
+tool_registry.object_id
+runtime_authority.object_id
+network_id
+us_token.package_id
+```
+
+Tool registration locks US collateral. Confirm that the signer owns a
+`Coin<US>` and record one coin ID:
 
 ```sh
-nexus tap publish-skill \
-  --config skill.tap.json \
-  --out tap.publish.json \
+sui client balance \
+  --coin-type 0xUS_PACKAGE::us::US \
+  --with-coins \
   --json
 ```
 
-This is a real network write and spends gas. Preserve `tap.publish.json`; it
-contains the published DAG identity and the skill requirements needed for the
-next step.
+Use that ID as `0xUS_COIN`. You may instead omit `--collateral-coin` during
+registration and let the Nexus CLI select the first owned `Coin<US>`.
 
-### 4. Create an agent and bind the skill
+The Nexus CLI signer that registers the Tool and the Sui CLI signer that owns
+the returned capabilities should be the address you intend to operate.
 
-For a new agent:
+### 2. Repeat local acceptance
 
 ```sh
-nexus tap bind --artifact tap.publish.json --json
+sui move build --path tap --build-env testnet --warnings-are-errors
+nexus tap test --path tap --threads 1
 ```
 
-For an existing agent:
+Before publication, replace the example Tool FQN in `application.move` with a
+unique FQN that you control. Rebuild and rerun the suite after the change.
+
+### 3. Publish the TAP package
+
+From `examples/local_testing`:
 
 ```sh
-nexus tap register-skill \
-  --artifact tap.publish.json \
-  --agent-id 0xAGENT \
+sui client publish tap \
+  --build-env testnet \
+  --skip-dependency-verification \
+  --gas-budget 300000000 \
   --json
 ```
 
-Record the returned agent ID and skill ID. Confirm the live requirements:
+`--skip-dependency-verification` is required because this repository provides
+public interface source rather than the private Nexus implementation source.
+It does not skip Sui bytecode verification for the TAP package.
+
+Record two created identities from `objectChanges`:
+
+1. The published TAP package ID.
+2. The shared `application::ApplicationState` object ID created by `init`.
+
+Inspect the state before continuing:
 
 ```sh
-nexus tap requirements \
-  --agent-id 0xAGENT \
-  --skill-id 0 \
+sui client object 0xAPPLICATION_STATE --json
+```
+
+### 4. Register the onchain Tool
+
+The application state ID is also the Tool witness ID. Register the published
+`review_vertex` module:
+
+```sh
+nexus tool register onchain \
+  --package 0xTAP_PACKAGE \
+  --module review_vertex \
+  --tool-fqn your.publisher.content_review@1 \
+  --description "Reviews content through the embedded TAP application" \
+  --tool-witness-id 0xAPPLICATION_STATE \
+  --collateral-coin 0xUS_COIN \
   --json
 ```
 
-### 5. Schedule one Testnet execution
+The CLI reads `execute` and `Output` from the published module, generates the
+schema and detects the workflow authorization argument automatically. It saves
+the returned Tool owner capabilities unless `--no-save` is used.
 
-Use input JSON that matches the entry ports in `dag.json`:
+Confirm the live record:
 
 ```sh
-nexus task schedule \
-  --agent-id 0xAGENT \
-  --skill-id 0 \
-  --input-json '{"entry":{"input":"value"}}' \
-  --prepay-amount-mist 500000000 \
-  --occurrence-budget-mist 500000000 \
-  --now \
+nexus tool inspect \
+  --tool-fqn your.publisher.content_review@1 \
   --json
 ```
 
-The exact input JSON depends on the DAG. Add each required authorization with
-`--authorization-binding vertex=0xRECIPIENT`. Use `nexus task schedule --help`
-for recurrence, deadlines, Agent funding, and priority fees.
+Stop if the FQN, package, module, witness, input schema, output schema or
+authorization mode differs from the application source.
 
-### 6. Assert network effects
+### 5. Attach the Agent and create the DAG
 
-Use the returned Task ID:
+Call the application setup function once:
+
+```sh
+sui client ptb \
+  --assign tap @0xTAP_PACKAGE \
+  --assign agent_registry @0xAGENT_REGISTRY \
+  --assign application_state @0xAPPLICATION_STATE \
+  --assign tool_registry @0xTOOL_REGISTRY \
+  --move-call "tap::application::setup_agent" \
+    agent_registry application_state tool_registry \
+  --gas-budget 300000000 \
+  --json
+```
+
+Record the `ApplicationConfiguredEvent` values:
+
+```text
+state_id
+agent_id
+dag_id
+skill_id
+```
+
+Also inspect the updated application state. The stored DAG and skill values
+must match the event.
+
+### 6. Fund the Agent and schedule a review
+
+The following PTB deposits 2.1 SUI into the embedded Agent, converts the
+network address to a Move `ID`, schedules the content `hello Nexus` and sends
+the owned Task pointer to the operator:
+
+```sh
+sui client ptb \
+  --assign tap @0xTAP_PACKAGE \
+  --assign runtime_authority @0xRUNTIME_AUTHORITY \
+  --assign agent_registry @0xAGENT_REGISTRY \
+  --assign dag @0xDAG \
+  --assign tool_registry @0xTOOL_REGISTRY \
+  --assign application_state @0xAPPLICATION_STATE \
+  --split-coins gas "[2100000000]" \
+  --assign funding \
+  --move-call "tap::application::fund_agent" application_state funding.0 \
+  --move-call "0x2::object::id_from_address" @0xNETWORK \
+  --assign network \
+  --move-call "tap::application::schedule_review" \
+    runtime_authority agent_registry dag tool_registry application_state \
+    "vector[104,101,108,108,111,32,78,101,120,117,115]" network @0x6 \
+  --assign scheduled \
+  --transfer-objects "[scheduled.1]" @0xOPERATOR \
+  --gas-budget 300000000 \
+  --json
+```
+
+The decimal byte vector is UTF8 for `hello Nexus`. For arbitrary text, encode
+the exact bytes used by the application client. Do not change the port order:
+the state object is port `0` and content is port `1`.
+
+Record the created shared `nexus_scheduler::task::Task` ID from
+`objectChanges`.
+
+### 7. Observe execution
+
+Inspect the Task and its occurrences:
 
 ```sh
 nexus task inspect --task-id 0xTASK --json
 nexus task occurrence list --task-id 0xTASK --json
 ```
 
-A strong integration check asserts transaction success, relevant event values,
-Task and occurrence state, TAP object state, and the expected Tool result. It
-should also use isolated Testnet objects so another run cannot corrupt the
-result.
+Inspect the application state after the workflow completes:
 
-## Release checklist
+```sh
+sui client object 0xAPPLICATION_STATE --json
+```
 
-Before Testnet publication:
+A strong integration assertion checks:
 
-1. `nexus tap test --path tap` passes.
-2. Every important TAP success and rejection path has a unit test.
-3. Fixtures arrange state but do not duplicate Nexus behavior.
-4. `sui move build --path tap --build-env testnet` passes.
-5. `nexus tap validate-skill --config skill.tap.json` passes.
-6. Every DAG Tool exists on Testnet and its schema matches the DAG.
+1. The scheduling transaction succeeded.
+2. The Task reached the expected terminal state.
+3. The execution used the intended DAG and Tool FQN.
+4. The Nexus Tool result has the expected variant and payload.
+5. Exactly one application counter changed.
+6. Relevant events name the expected Task, Agent, DAG and execution.
+7. Gas and Tool charges remain inside the intended budget.
 
-Before Mainnet publication:
+### 8. Close or cancel the Task
 
-1. The full Testnet integration path has passed.
-2. `nexus tap test --path tap --build-env mainnet` passes.
-3. A Mainnet build passes with `--build-env mainnet`.
-4. Mainnet Tool registrations and Nexus object configuration are verified.
-5. No test fixture or test module is present in published TAP bytecode.
+After a terminal execution, refund the unused reserve and clear the pending ID:
+
+```sh
+sui client ptb \
+  --assign tap @0xTAP_PACKAGE \
+  --assign application_state @0xAPPLICATION_STATE \
+  --assign task @0xTASK \
+  --move-call "tap::application::close_review" application_state task \
+  --gas-budget 100000000 \
+  --json
+```
+
+If the occurrence has not entered execution and should not run, cancel it
+first:
+
+```sh
+sui client ptb \
+  --assign tap @0xTAP_PACKAGE \
+  --assign application_state @0xAPPLICATION_STATE \
+  --assign task @0xTASK \
+  --move-call "tap::application::cancel_review" application_state task \
+  --move-call "tap::application::close_review" application_state task \
+  --gas-budget 100000000 \
+  --json
+```
+
+If work is already in flight, cancellation stops future work but close must
+wait for the current execution to settle.
+
+## What unit tests can and cannot prove
+
+With focused extensions, local tests can prove:
+
+1. TAP branching, errors, state changes and object cleanup.
+2. Calls to public Nexus functions using the selected published bodies.
+3. Agent, DAG, skill, Task and authorization relationships built from complete
+   local state.
+4. Workflow callback authorization and exact input commitments.
+5. Result construction and consumption across transaction boundaries.
+6. Expected abort codes and module locations.
+7. Testnet or Mainnet bytecode compatibility for the resolved package graph.
+
+They cannot alone prove:
+
+1. Current contents or versions of live shared objects.
+2. Real package publication and transaction dependency routing.
+3. Leader selection, consensus, congestion or runtime service availability.
+4. Gas coin selection or actual transaction cost.
+5. Offchain Tool HTTP behavior, signatures or timeouts.
+6. RPC, indexer or event subscription behavior.
+7. Any state that the local suite did not construct.
+
+The rule is precise: unit test all deterministic application behavior and all
+reachable published Nexus behavior locally. Move to Testnet at the first
+assertion that depends on current external state.
 
 ## Troubleshooting
 
-### A direct `sui move test` call reaches `ELocalExecutionUnavailable`
+### `nexus tap test` is not a recognized command
 
-The test executed a source interface stub. Run it with `nexus tap test` when it
-needs Nexus behavior.
+Install a Nexus CLI release that includes TAP unit testing. Confirm the active
+binary with `nexus --version` and `nexus tap test --help` before continuing.
+
+### Nexus calls abort with `ELocalExecutionUnavailable`
+
+The suite was run with `sui move test`, so it reached interface stub bodies.
+Run `nexus tap test --path tap`.
 
 ### An extension is rejected by the parser
 
-Set `edition = "2024.alpha"`, add `#[test_only]`, and place the extension in
-the root TAP package. Dependency packages cannot supply extensions for a
-consumer test.
+Use `edition = "2024.alpha"`, place the file in the root TAP `tests/`
+directory and add `#[test_only]` above `extend module`.
 
-### Two extension files conflict
+### Two files extend the same module
 
-Move permits only one active extension for the same module and mode. Combine
-the helpers in one file under `tests/`.
+Only one active extension is allowed for a module and mode. Combine the helper
+functions in one file.
 
-### A fixture cannot find a field, variant, or function
+### A private field or variant is missing
 
-Confirm that the TAP depends on the package containing that declaration and
-that the current public interface includes it. Private fields and enum variants
-can be used inside an extension. A Nexus test function removed before
-publication cannot be called and must be recreated when appropriate.
+Confirm that the TAP directly depends on the package containing that type and
+that the checked out interface matches the selected release. An extension can
+use only layouts present in the public interface.
 
 ### The linker reports an ABI or layout mismatch
 
-The source interface and selected published package do not describe the same
-module. Update the interface package record, select the intended build
-environment, and run again. Do not bypass the check.
+The interface and selected published package do not describe the same module.
+Use the interface revision and build environment belonging to that deployment.
+Do not bypass the check.
 
-### The command cannot fetch bytecode
+### The command cannot read published bytecode
 
-Confirm network access and retry. The command reads the Sui Testnet or Mainnet
-RPC selected by `--build-env`; it does not use wallet credentials for this
-read.
+Confirm network access and the value passed to `--build-env`. Unit testing is a
+read only network operation, but it still needs Testnet or Mainnet RPC access.
 
-### Tests pass locally but Testnet fails
+### `nexus_kernel` is an unbound address
 
-Compare the transaction sender, object IDs and versions, shared object
-mutability, Tool registration, authorization bindings, input JSON, gas budget,
-and active Nexus object map. These are integration inputs and are outside the
-local unit test VM unless the test explicitly constructs an equivalent model.
+The application imports `RuntimeAuthority` directly but does not declare the
+kernel dependency. Add the pinned Git dependency shown earlier, or a local
+path when developing inside this repository.
 
-### A failure inside Nexus has no Nexus source line
+### Tool registration finds the wrong callback shape
 
-Published packages contain bytecode but do not expose the private Nexus source
-map. A failure can identify the Nexus module and bytecode location, while TAP
-frames still use the TAP source map produced during compilation. Use the module
-location and the smallest focused input to isolate the published call, then
-confirm any live state assumptions on Testnet.
+Confirm that the published module exposes one public `execute` with Nexus
+injected arguments first, business inputs next and `TxContext` last. Confirm
+that the module also declares a public `Output` enum.
+
+### Setup says the Tool is not registered
+
+The FQN in `application::review_vertex_fqn` differs from the FQN registered in
+the selected Tool registry, or registration used another network. Inspect the
+Tool record and current Nexus configuration.
+
+### Local tests pass but Testnet fails
+
+Compare sender, object IDs, shared object mutability, package environment, Tool
+FQN, Tool witness, authorization binding, port order, network ID, Agent funds,
+gas budget and current Nexus object map. These are Testnet inputs, not local
+application logic.
+
+### A Nexus failure has no source line
+
+Published packages expose bytecode, not private Nexus source maps. TAP frames
+still show local source. Use the Nexus module and bytecode location, reduce the
+input to the smallest failing call and verify every live object assumption on
+Testnet.
+
+## Release checklist
+
+Before Testnet:
+
+1. The Tool FQN is unique and identical in code and deployment input.
+2. `sui move build --build-env testnet --warnings-are-errors` passes.
+3. Unfiltered `nexus tap test --path tap` passes.
+4. Every protected state change has success, rejection and wrong authority
+   coverage where material.
+5. Every Tool callback checks its exact concrete input commitment.
+6. Fixtures arrange state but do not copy Nexus behavior.
+7. Task cancel, terminal close and reserve ownership are tested.
+8. No test module or fixture is included in production bytecode.
+
+Before Mainnet:
+
+1. The entire isolated Testnet flow has passed.
+2. Testnet assertions include final application and Task state, not only a
+   successful transaction digest.
+3. `nexus tap test --path tap --build-env mainnet` passes.
+4. `sui move build --build-env mainnet --warnings-are-errors` passes.
+5. Mainnet Tool records, schemas, witnesses and Nexus object configuration are
+   verified independently.
+6. Budgets come from measured Testnet cost with an explicit safety margin.
 
 ## Source and publication safety
 
-The interface packages and published bytecode are dependencies, not TAP
-publication inputs. Do not publish these interface packages and do not use
-them to upgrade Nexus.
+Public interfaces and downloaded bytecode are dependencies, not TAP modules.
+Do not publish the interface packages or use them to upgrade Nexus.
 
-The command does not reveal Nexus source. Sui package bytecode is public chain
-data and is inherently inspectable. The local overlay adds only developer
-owned test functions and exists only in memory for the unit test process.
+Sui bytecode is public chain data. `nexus tap test` reads it, overlays only
+developer test functions in memory and marks the result as not publishable. It
+does not recover or expose private Nexus source.
 
-For the exact executable code behind this guide, read the
-[`examples/local_testing`](../examples/local_testing) package.
+[Nexus CLI setup guide]: https://docs.talus.network/talus-documentation/developer-docs/index-1/cli
