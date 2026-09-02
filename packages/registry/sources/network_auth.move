@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_registry::network_auth`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_registry::network_auth;
 
-//! Interface for [`nexus_registry::network_auth`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Canonical identity key namespace for key bindings.
 ///
@@ -161,31 +169,41 @@ public struct ActiveKeyUpdatedEvent has copy, drop {
 /// The leader capability serves as the on chain authorization to act as a
 /// Leader identity and register/rotate keys for `IdentityKey::Leader { leader_cap_id:
 /// object::id(leader_cap) }`.
-public native fun prove_leader(
+public fun prove_leader(
     leader_registry: &nexus_registry::leader::LeaderRegistry,
     leader_cap: &nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_registry::leader_cap::OverNetwork,
     >,
-): ProofOfIdentity;
+): ProofOfIdentity {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates identity proof for an off chain Tool using its owner capability.
 ///
 /// The owner cap is validated against the Tool object before binding its stable ID.
-public native fun prove_offchain_tool(
+public fun prove_offchain_tool(
     tool: &nexus_tool::tool_registry::Tool,
     owner_cap: &mut nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_tool::tool_authority::OverTool,
     >,
-): ProofOfIdentity;
+): ProofOfIdentity {
+    abort ELocalExecutionUnavailable
+}
 
 /// Return the identity proven by the proof.
-public native fun proof_identity(self: &ProofOfIdentity): IdentityKey;
+public fun proof_identity(self: &ProofOfIdentity): IdentityKey {
+    abort ELocalExecutionUnavailable
+}
 
 /// Build a leader identity key from a leader capability id.
-public native fun identity_key_leader(leader_cap_id: sui::object::ID): IdentityKey;
+public fun identity_key_leader(leader_cap_id: sui::object::ID): IdentityKey {
+    abort ELocalExecutionUnavailable
+}
 
 /// Build a tool identity key from a stable Tool object ID.
-public native fun identity_key_tool(tool_id: sui::object::ID): IdentityKey;
+public fun identity_key_tool(tool_id: sui::object::ID): IdentityKey {
+    abort ELocalExecutionUnavailable
+}
 
 /// Create proof_of_possession for registering the given public key.
 /// Only Ed25519 keys are supported.
@@ -194,12 +212,14 @@ public native fun identity_key_tool(tool_id: sui::object::ID): IdentityKey;
 /// `POP_DOMAIN || bcs(IdentityKey) || bcs(key_id) || public_key`
 /// using the same public key, proving control of the private key for this
 /// specific identity and key id slot.
-public native fun new_proof_of_key(
+public fun new_proof_of_key(
     binding: &KeyBinding,
     identity: &ProofOfIdentity,
     public_key: vector<u8>,
     signature: vector<u8>,
-): ProofOfKey;
+): ProofOfKey {
+    abort ELocalExecutionUnavailable
+}
 
 /// Deterministic derived address for the key binding.
 ///
@@ -207,43 +227,61 @@ public native fun new_proof_of_key(
 ///
 /// This allows any caller to deterministically compute where the [KeyBinding]
 /// for an identity lives on chain.
-public native fun binding_address(registry: &NetworkAuth, identity: IdentityKey): address;
+public fun binding_address(registry: &NetworkAuth, identity: IdentityKey): address {
+    abort ELocalExecutionUnavailable
+}
 
 /// Check whether a binding has been created for the given identity.
-public native fun binding_exists(registry: &NetworkAuth, identity: IdentityKey): bool;
+public fun binding_exists(registry: &NetworkAuth, identity: IdentityKey): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the singleton registered key verifier witness ID.
-public native fun registered_key_witness(self: &NetworkAuth): sui::object::ID;
+public fun registered_key_witness(self: &NetworkAuth): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Create a new key binding for the given identity.
 ///
 /// This claims the derived object ID, initializes the binding state, and
 /// inserts the identity into the registry's discovery set.
-public native fun create_binding(
+public fun create_binding(
     registry: &mut NetworkAuth,
     identity: ProofOfIdentity,
     description: std::option::Option<vector<u8>>,
     ctx: &mut sui::tx_context::TxContext,
-): KeyBinding;
+): KeyBinding {
+    abort ELocalExecutionUnavailable
+}
 
 /// Return the identity associated with a key binding.
-public native fun key_binding_identity(self: &KeyBinding): IdentityKey;
+public fun key_binding_identity(self: &KeyBinding): IdentityKey {
+    abort ELocalExecutionUnavailable
+}
 
 /// Return the active key id for a binding.
 ///
 /// Offchain verifiers must accept signatures from this key only.
-public native fun key_binding_active_key_id(self: &KeyBinding): std::option::Option<u64>;
+public fun key_binding_active_key_id(self: &KeyBinding): std::option::Option<u64> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Return the next key id that will be assigned on registration.
 ///
 /// This value is also committed into PoP signatures to make them one time use.
-public native fun key_binding_next_key_id(self: &KeyBinding): u64;
+public fun key_binding_next_key_id(self: &KeyBinding): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Borrow a key record by id.
-public native fun key_binding_key(self: &KeyBinding, key_id: u64): &KeyRecord;
+public fun key_binding_key(self: &KeyBinding, key_id: u64): &KeyRecord {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether the current active slot is a live, correctly sized Ed25519 key.
-public native fun active_key_is_usable(binding: &KeyBinding): bool;
+public fun active_key_is_usable(binding: &KeyBinding): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Verify an Ed25519 signature against the currently active key for this binding.
 ///
@@ -251,34 +289,42 @@ public native fun active_key_is_usable(binding: &KeyBinding): bool;
 /// - the active key record exists and is not revoked,
 /// - the key scheme and sizes are valid Ed25519 values, and
 /// - signature verification succeeds.
-public native fun verify_active_key_signature(
+public fun verify_active_key_signature(
     binding: &KeyBinding,
     signature: &vector<u8>,
     message: &vector<u8>,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Register a new key and set it as active.
 ///
 /// This assigns a monotonically increasing key id, stores the key record, and
 /// updates the active key pointer.
-public native fun register_key(
+public fun register_key(
     binding: &mut KeyBinding,
     identity: &ProofOfIdentity,
     proof_of_key: ProofOfKey,
     clock: &sui::clock::Clock,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Revoke an existing key.
 ///
 /// This sets the revocation timestamp and clears the active key if needed.
-public native fun revoke_key(
+public fun revoke_key(
     binding: &mut KeyBinding,
     identity: &ProofOfIdentity,
     key_id: u64,
     clock: &sui::clock::Clock,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Set the active key to an existing, non revoked key.
 ///
 /// This switches the active key pointer without altering key records.
-public native fun set_active_key(binding: &mut KeyBinding, identity: &ProofOfIdentity, key_id: u64);
+public fun set_active_key(binding: &mut KeyBinding, identity: &ProofOfIdentity, key_id: u64) {
+    abort ELocalExecutionUnavailable
+}

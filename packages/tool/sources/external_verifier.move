@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_tool::external_verifier`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_tool::external_verifier;
 
-//! Interface for [`nexus_tool::external_verifier`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Concrete external call target and its ordered immutable shared object IDs.
 public struct ExternalVerifier has copy, drop, store {
@@ -19,22 +27,32 @@ public struct ExternalVerifierRegistration {
 }
 
 /// Creates a registration with [`witness`] as immutable object zero.
-public native fun new<W: key>(
+public fun new<W: key>(
     tool: sui::object::ID,
     package: sui::object::ID,
     module_name: std::ascii::String,
     function_name: std::ascii::String,
     witness: &W,
-): ExternalVerifierRegistration;
+): ExternalVerifierRegistration {
+    abort ELocalExecutionUnavailable
+}
 
 /// Appends an immutable shared object argument to this registration.
-public native fun add_object<T: key>(self: &mut ExternalVerifierRegistration, object: &T);
+public fun add_object<T: key>(self: &mut ExternalVerifierRegistration, object: &T) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the configured verifier method.
-public native fun method(self: &ExternalVerifier): nexus_interface::verifier::VerifierMethodId;
+public fun method(self: &ExternalVerifier): nexus_interface::verifier::VerifierMethodId {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the verifier witness object ID.
-public native fun witness(self: &ExternalVerifier): sui::object::ID;
+public fun witness(self: &ExternalVerifier): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the ordered immutable shared object arguments.
-public native fun immutable_shared_objects(self: &ExternalVerifier): vector<sui::object::ID>;
+public fun immutable_shared_objects(self: &ExternalVerifier): vector<sui::object::ID> {
+    abort ELocalExecutionUnavailable
+}

@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_interface::agent`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_interface::agent;
 
-//! Interface for [`nexus_interface::agent`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Binding between a TAP skill and DAG selection.
 ///
@@ -131,85 +139,113 @@ public struct AgentCreatedEvent has copy, drop {
 /// The function initializes the Agent payment vault.
 /// Registry code is responsible for checking mutable agent custody
 /// before exposing this identity as an agent record.
-public native fun create_agent_identity(ctx: &mut sui::tx_context::TxContext): Agent;
+public fun create_agent_identity(ctx: &mut sui::tx_context::TxContext): Agent {
+    abort ELocalExecutionUnavailable
+}
 
 /// Allocate the next agent local skill index.
 ///
 /// Only code with mutable access to `Agent` can allocate, preventing external
 /// callers from forging skill IDs for an agent they do not control.
-public native fun allocate_skill_id(agent: &mut Agent): u64;
+public fun allocate_skill_id(agent: &mut Agent): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Validate that the caller is the registry bound to this agent.
-public native fun assert_agent_registry_authorized(
-    agent: &Agent,
-    registry_authority: &sui::object::UID,
-);
+public fun assert_agent_registry_authorized(agent: &Agent, registry_authority: &sui::object::UID) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Bind an agent identity to the registry that controls its skill metadata.
 ///
 /// Only code that can borrow the registry UID later can register or update skills.
-public native fun bind_agent_registry(agent: &mut Agent, registry_id: &sui::object::UID);
+public fun bind_agent_registry(agent: &mut Agent, registry_id: &sui::object::UID) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the next skill index that would be allocated for this agent.
-public native fun agent_next_skill_id(agent: &Agent): u64;
+public fun agent_next_skill_id(agent: &Agent): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the payment policy committed by these skill requirements.
-public native fun requirements_payment_policy(
+public fun requirements_payment_policy(
     requirements: SkillRequirement,
-): nexus_interface::payment::SkillPaymentPolicy;
+): nexus_interface::payment::SkillPaymentPolicy {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the schedule policy committed by these skill requirements.
-public native fun requirements_schedule_policy(requirements: SkillRequirement): SkillSchedulePolicy;
+public fun requirements_schedule_policy(requirements: SkillRequirement): SkillSchedulePolicy {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the input commitment bytes committed by these skill requirements.
-public native fun requirements_input_commitment(requirements: SkillRequirement): vector<u8>;
+public fun requirements_input_commitment(requirements: SkillRequirement): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the fixed tools that must remain present in the bound DAG.
-public native fun requirements_fixed_tools(requirements: SkillRequirement): vector<FixedTool>;
+public fun requirements_fixed_tools(requirements: SkillRequirement): vector<FixedTool> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Constructs a fixed tool identity from its registry ID and fully qualified name.
-public native fun fixed_tool(
-    tool_registry_id: sui::object::ID,
-    tool_fqn: std::ascii::String,
-): FixedTool;
+public fun fixed_tool(tool_registry_id: sui::object::ID, tool_fqn: std::ascii::String): FixedTool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the tool registry ID of a fixed tool.
-public native fun fixed_tool_registry_id(tool: FixedTool): sui::object::ID;
+public fun fixed_tool_registry_id(tool: FixedTool): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the fully qualified name of a fixed tool.
-public native fun fixed_tool_fqn(tool: FixedTool): std::ascii::String;
+public fun fixed_tool_fqn(tool: FixedTool): std::ascii::String {
+    abort ELocalExecutionUnavailable
+}
 
 /// Constructs an execution selection targeting a specific agent skill.
-public native fun execution_selection_agent_skill(
+public fun execution_selection_agent_skill(
     agent_id: sui::object::ID,
     skill_id: u64,
     selected_dag: std::option::Option<sui::object::ID>,
-): ExecutionSelection;
+): ExecutionSelection {
+    abort ELocalExecutionUnavailable
+}
 
 /// Constructs an execution selection targeting the default agent for a DAG.
-public native fun execution_selection_default_agent(dag_id: sui::object::ID): ExecutionSelection;
+public fun execution_selection_default_agent(dag_id: sui::object::ID): ExecutionSelection {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the agent ID of an agent skill execution selection.
 ///
 /// Aborts with `EAgentExecutionSkillRequired` if the selection is a default agent selection.
-public native fun execution_selection_agent_id(selection: &ExecutionSelection): sui::object::ID;
+public fun execution_selection_agent_id(selection: &ExecutionSelection): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the skill ID of an agent skill execution selection.
 ///
 /// Aborts with `EAgentExecutionSkillRequired` if the selection is a default agent selection.
-public native fun execution_selection_skill_id(selection: &ExecutionSelection): u64;
+public fun execution_selection_skill_id(selection: &ExecutionSelection): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the DAG ID of a default agent execution selection.
 ///
 /// Aborts with `EDefaultAgentExecutionRequired` if the selection is an agent skill selection.
-public native fun execution_selection_default_agent_dag_id(
+public fun execution_selection_default_agent_dag_id(
     selection: &ExecutionSelection,
-): sui::object::ID;
+): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Builds an execution config that runs a DAG through the default agent.
 ///
 /// The invoker is recorded as the transaction sender.
-public native fun new_default_agent_execution_config(
+public fun new_default_agent_execution_config(
     dag: sui::object::ID,
     network: sui::object::ID,
     entry_group: nexus_interface::graph::EntryGroup,
@@ -218,12 +254,14 @@ public native fun new_default_agent_execution_config(
         sui::vec_map::VecMap<nexus_interface::graph::InputPort, nexus_primitives::data::NexusData>,
     >,
     ctx: &mut sui::tx_context::TxContext,
-): AgentExecutionConfig;
+): AgentExecutionConfig {
+    abort ELocalExecutionUnavailable
+}
 
 /// Builds an execution config that runs a DAG through a specific agent skill.
 ///
 /// The invoker is recorded as the transaction sender.
-public native fun new_agent_execution_config(
+public fun new_agent_execution_config(
     agent_id: sui::object::ID,
     network: sui::object::ID,
     entry_group: nexus_interface::graph::EntryGroup,
@@ -235,35 +273,47 @@ public native fun new_agent_execution_config(
     selected_dag: std::option::Option<sui::object::ID>,
     authorization_bindings: sui::vec_map::VecMap<nexus_interface::graph::Vertex, sui::object::ID>,
     ctx: &mut sui::tx_context::TxContext,
-): AgentExecutionConfig;
+): AgentExecutionConfig {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the DAG ID of a default agent execution config.
 ///
 /// Aborts with `EDefaultAgentExecutionRequired` if the config targets an agent skill.
-public native fun agent_execution_config_dag_id(self: &AgentExecutionConfig): sui::object::ID;
+public fun agent_execution_config_dag_id(self: &AgentExecutionConfig): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the skill ID of an agent skill execution config.
 ///
 /// Aborts with `EAgentExecutionSkillRequired` if the config targets the default agent.
-public native fun agent_execution_config_skill_id(self: &AgentExecutionConfig): u64;
+public fun agent_execution_config_skill_id(self: &AgentExecutionConfig): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the runtime selected DAG of an agent skill execution config, if any.
 ///
 /// Aborts with `EAgentExecutionSkillRequired` if the config targets the default agent.
-public native fun agent_execution_config_selected_dag(
+public fun agent_execution_config_selected_dag(
     self: &AgentExecutionConfig,
-): std::option::Option<sui::object::ID>;
+): std::option::Option<sui::object::ID> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the agent ID of an agent skill execution config.
 ///
 /// Aborts with `EAgentExecutionSkillRequired` if the config targets the default agent.
-public native fun agent_execution_config_agent_id(self: &AgentExecutionConfig): sui::object::ID;
+public fun agent_execution_config_agent_id(self: &AgentExecutionConfig): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether caller intent selects the default Agent.
-public native fun agent_execution_config_is_default(self: &AgentExecutionConfig): bool;
+public fun agent_execution_config_is_default(self: &AgentExecutionConfig): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Consumes an execution config and returns its component fields.
-public native fun destroy_agent_execution_config(
+public fun destroy_agent_execution_config(
     self: AgentExecutionConfig,
 ): (
     sui::object::ID,
@@ -275,10 +325,12 @@ public native fun destroy_agent_execution_config(
     address,
     ExecutionSelection,
     sui::vec_map::VecMap<nexus_interface::graph::Vertex, sui::object::ID>,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates a durable execution target after registry validation.
-public native fun execution_spec(
+public fun execution_spec(
     dag_id: sui::object::ID,
     agent_id: sui::object::ID,
     skill_id: u64,
@@ -290,43 +342,59 @@ public native fun execution_spec(
         sui::vec_map::VecMap<nexus_interface::graph::InputPort, nexus_primitives::data::NexusData>,
     >,
     invoker: address,
-): ExecutionSpec;
+): ExecutionSpec {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the DAG pinned by [`ExecutionSpec`].
-public native fun execution_spec_dag_id(self: &ExecutionSpec): sui::object::ID;
+public fun execution_spec_dag_id(self: &ExecutionSpec): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the agent pinned by [`ExecutionSpec`].
-public native fun execution_spec_agent_id(self: &ExecutionSpec): sui::object::ID;
+public fun execution_spec_agent_id(self: &ExecutionSpec): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the skill pinned by [`ExecutionSpec`].
-public native fun execution_spec_skill_id(self: &ExecutionSpec): u64;
+public fun execution_spec_skill_id(self: &ExecutionSpec): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the interface revision pinned by [`ExecutionSpec`].
-public native fun execution_spec_interface_version(
+public fun execution_spec_interface_version(
     self: &ExecutionSpec,
-): nexus_interface::version::InterfaceVersion;
+): nexus_interface::version::InterfaceVersion {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the leader network pinned by [`ExecutionSpec`].
-public native fun execution_spec_network(self: &ExecutionSpec): sui::object::ID;
+public fun execution_spec_network(self: &ExecutionSpec): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the entry group pinned by [`ExecutionSpec`].
-public native fun execution_spec_entry_group(
-    self: &ExecutionSpec,
-): nexus_interface::graph::EntryGroup;
+public fun execution_spec_entry_group(self: &ExecutionSpec): nexus_interface::graph::EntryGroup {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the input values pinned by [`ExecutionSpec`].
-public native fun execution_spec_inputs(
+public fun execution_spec_inputs(
     self: &ExecutionSpec,
 ): sui::vec_map::VecMap<
     nexus_interface::graph::Vertex,
     sui::vec_map::VecMap<nexus_interface::graph::InputPort, nexus_primitives::data::NexusData>,
->;
+> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the invoker recorded by [`ExecutionSpec`].
-public native fun execution_spec_invoker(self: &ExecutionSpec): address;
+public fun execution_spec_invoker(self: &ExecutionSpec): address {
+    abort ELocalExecutionUnavailable
+}
 
 /// Builds vertex authorization grants for a Task.
-public native fun new_task_vertex_authorization_grants(
+public fun new_task_vertex_authorization_grants(
     agent: &Agent,
     dag_id: sui::object::ID,
     skill_id: u64,
@@ -337,10 +405,12 @@ public native fun new_task_vertex_authorization_grants(
     nexus_primitives::authorization::Grant<
         nexus_interface::authorization::AgentVertexAuthorization,
     >,
->;
+> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Builds the authorization and user funded reserve for a Task.
-public native fun new_task_components_address_funded_with_grants(
+public fun new_task_components_address_funded_with_grants(
     agent: &Agent,
     interface_revision: nexus_interface::version::InterfaceVersion,
     payment_policy: nexus_interface::payment::SkillPaymentPolicy,
@@ -355,10 +425,12 @@ public native fun new_task_components_address_funded_with_grants(
 ): (
     nexus_interface::authorization::AgentSkillAuthorization,
     nexus_interface::payment::TaskPaymentReserve,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Builds the authorization and Agent funded reserve for a Task.
-public native fun new_task_components_from_agent_vault_with_grants(
+public fun new_task_components_from_agent_vault_with_grants(
     agent: &mut Agent,
     interface_revision: nexus_interface::version::InterfaceVersion,
     payment_policy: nexus_interface::payment::SkillPaymentPolicy,
@@ -372,99 +444,134 @@ public native fun new_task_components_from_agent_vault_with_grants(
 ): (
     nexus_interface::authorization::AgentSkillAuthorization,
     nexus_interface::payment::TaskPaymentReserve,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Asserts that a fixed tool list contains no duplicate entries.
 ///
 /// Aborts with `EFixedToolDuplicate` if two entries share both registry ID and FQN.
-public native fun assert_canonical_fixed_tools(fixed_tools: &vector<FixedTool>);
+public fun assert_canonical_fixed_tools(fixed_tools: &vector<FixedTool>) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Cancels a scheduled payment reserve and returns its remaining funds to the agent vault.
 ///
 /// Aborts with `EVaultAgentMismatch` if the reserve or vault does not belong to the agent.
-public native fun cancel_task_reserve_to_vault(
+public fun cancel_task_reserve_to_vault(
     agent: &mut Agent,
     reserve: &mut nexus_interface::payment::TaskPaymentReserve,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Refills an agent funded Task reserve from its owning vault.
-public native fun refill_task_reserve_from_vault(
+public fun refill_task_reserve_from_vault(
     agent: &mut Agent,
     reserve: &mut nexus_interface::payment::TaskPaymentReserve,
     amount: u64,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Deposit SUI into an agent payment vault. Any sender may fund a vault.
-public native fun deposit_agent_payment_vault(
-    agent: &mut Agent,
-    coin: sui::coin::Coin<sui::sui::SUI>,
-);
+public fun deposit_agent_payment_vault(agent: &mut Agent, coin: sui::coin::Coin<sui::sui::SUI>) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Refill an agent funded execution payment by withdrawing from the owning agent vault.
-public native fun refill_execution_payment_from_agent_vault_balance(
+public fun refill_execution_payment_from_agent_vault_balance(
     agent: &mut Agent,
     payment: &mut nexus_interface::payment::ExecutionPayment,
     amount: u64,
-): u64;
+): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Withdraw SUI from an agent payment vault.
 ///
 /// Registry wrappers choose the authorization policy. Active payment funds
 /// are held by their [`payment_interface::ExecutionPayment`] values.
-public native fun withdraw_agent_payment_vault(
+public fun withdraw_agent_payment_vault(
     agent: &mut Agent,
     amount: u64,
     ctx: &mut sui::tx_context::TxContext,
-): sui::coin::Coin<sui::sui::SUI>;
+): sui::coin::Coin<sui::sui::SUI> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Constructs a skill DAG binding pinned to a specific DAG.
-public native fun dag_binding_pinned(dag_id: address): SkillDagBinding;
+public fun dag_binding_pinned(dag_id: address): SkillDagBinding {
+    abort ELocalExecutionUnavailable
+}
 
 /// Constructs a skill DAG binding whose DAG is selected at runtime.
-public native fun dag_binding_runtime_selected(): SkillDagBinding;
+public fun dag_binding_runtime_selected(): SkillDagBinding {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether a skill DAG binding selects its DAG at runtime.
-public native fun dag_binding_is_runtime_selected(binding: SkillDagBinding): bool;
+public fun dag_binding_is_runtime_selected(binding: SkillDagBinding): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the pinned DAG ID of a binding, or `none` when the DAG is runtime selected.
-public native fun dag_binding_pinned_dag_id(binding: SkillDagBinding): std::option::Option<address>;
+public fun dag_binding_pinned_dag_id(binding: SkillDagBinding): std::option::Option<address> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the object address of the agent's payment vault.
-public native fun agent_payment_vault_id(agent: &Agent): address;
+public fun agent_payment_vault_id(agent: &Agent): address {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the agent ID recorded in the agent's payment vault.
-public native fun agent_payment_vault_agent_id(agent: &Agent): sui::object::ID;
+public fun agent_payment_vault_agent_id(agent: &Agent): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the spendable SUI balance of the agent's payment vault.
-public native fun agent_payment_vault_available_balance(agent: &Agent): u64;
+public fun agent_payment_vault_available_balance(agent: &Agent): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Constructs the input, payment, scheduling, and fixed Tool requirements committed by a skill revision.
-public native fun skill_requirements(
+public fun skill_requirements(
     input_commitment: vector<u8>,
     payment_policy: nexus_interface::payment::SkillPaymentPolicy,
     schedule_policy: SkillSchedulePolicy,
     fixed_tools: vector<FixedTool>,
-): SkillRequirement;
+): SkillRequirement {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates a policy that permits exactly one dispatched occurrence.
-public native fun schedule_once(): SkillSchedulePolicy;
+public fun schedule_once(): SkillSchedulePolicy {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates a recurring policy with a minimum interval and optional total cap.
 ///
 /// Aborts with `EInvalidSchedulePolicy` if `min_interval_ms` is zero or a supplied
 /// `max_occurrences` is zero.
-public native fun schedule_recurring(
+public fun schedule_recurring(
     min_interval_ms: u64,
     max_occurrences: std::option::Option<u64>,
-): SkillSchedulePolicy;
+): SkillSchedulePolicy {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether [`SkillSchedulePolicy`] permits recurrence.
-public native fun schedule_policy_allows_recurrence(policy: SkillSchedulePolicy): bool;
+public fun schedule_policy_allows_recurrence(policy: SkillSchedulePolicy): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the minimum dispatch interval.
-public native fun schedule_policy_min_interval_ms(policy: SkillSchedulePolicy): u64;
+public fun schedule_policy_min_interval_ms(policy: SkillSchedulePolicy): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the total dispatch cap.
-public native fun schedule_policy_max_occurrences(
-    policy: SkillSchedulePolicy,
-): std::option::Option<u64>;
+public fun schedule_policy_max_occurrences(policy: SkillSchedulePolicy): std::option::Option<u64> {
+    abort ELocalExecutionUnavailable
+}

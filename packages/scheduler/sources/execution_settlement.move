@@ -1,20 +1,30 @@
+/// Interface for the published [`nexus_scheduler::execution_settlement`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_scheduler::execution_settlement;
 
-//! Interface for [`nexus_scheduler::execution_settlement`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Aborts an execution whose active walk has expired.
-public native fun abort_expired_execution(
+public fun abort_expired_execution(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     dag: &nexus_interface::dag::DAG,
     execution: &mut nexus_workflow::execution::DAGExecution,
     clock: &sui::clock::Clock,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Records gas and settles one committed Tool result as the responsible leader.
-public native fun settle_committed_tool_result_for_walk_by_leader(
+public fun settle_committed_tool_result_for_walk_by_leader(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     dag: &nexus_interface::dag::DAG,
     execution: &mut nexus_workflow::execution::DAGExecution,
@@ -32,10 +42,12 @@ public native fun settle_committed_tool_result_for_walk_by_leader(
     settlement_gas_charge: u64,
     clock: &sui::clock::Clock,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Records one leader's committed Tool result gas charge.
-public native fun record_committed_tool_result_gas_charge_by_leader(
+public fun record_committed_tool_result_gas_charge_by_leader(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     dag: &nexus_interface::dag::DAG,
     execution: &mut nexus_workflow::execution::DAGExecution,
@@ -51,26 +63,32 @@ public native fun record_committed_tool_result_gas_charge_by_leader(
     settlement_gas_charge: u64,
     clock: &sui::clock::Clock,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Refills one execution payment from a coin.
-public native fun refill_tap_execution_payment(
+public fun refill_tap_execution_payment(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     execution: &mut nexus_workflow::execution::DAGExecution,
     coin: sui::coin::Coin<sui::sui::SUI>,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Refills one execution payment from its Agent vault.
-public native fun refill_tap_execution_payment_from_agent_vault(
+public fun refill_tap_execution_payment_from_agent_vault(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     agent: &mut nexus_interface::agent::Agent,
     execution: &mut nexus_workflow::execution::DAGExecution,
     amount: u64,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Settles one committed Tool result after its permissionless deadline.
-public native fun settle_committed_tool_result_for_walk(
+public fun settle_committed_tool_result_for_walk(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     dag: &nexus_interface::dag::DAG,
     execution: &mut nexus_workflow::execution::DAGExecution,
@@ -80,10 +98,12 @@ public native fun settle_committed_tool_result_for_walk(
     walk_index: u64,
     clock: &sui::clock::Clock,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Removes an invalid Tool result after its cleanup deadline.
-public native fun cleanup_broken_onchain_tool_result(
+public fun cleanup_broken_onchain_tool_result(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     dag: &nexus_interface::dag::DAG,
     execution: &mut nexus_workflow::execution::DAGExecution,
@@ -93,10 +113,12 @@ public native fun cleanup_broken_onchain_tool_result(
     walk_index: u64,
     tool_witness_id: sui::object::ID,
     clock: &sui::clock::Clock,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Consumes and settles a permissionless onchain Tool result.
-public native fun settle_onchain_tool_result_for_walk(
+public fun settle_onchain_tool_result_for_walk(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     dag: &nexus_interface::dag::DAG,
     execution: &mut nexus_workflow::execution::DAGExecution,
@@ -109,14 +131,18 @@ public native fun settle_onchain_tool_result_for_walk(
     tool_witness_id: sui::object::ID,
     clock: &sui::clock::Clock,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Emits requests for active walks whose payment is ready.
-public native fun emit_payment_ready_walk_requests(
+public fun emit_payment_ready_walk_requests(
     authority: &nexus_kernel::runtime_authority::RuntimeAuthority,
     dag: &nexus_interface::dag::DAG,
     execution: &mut nexus_workflow::execution::DAGExecution,
     leader_registry: &nexus_registry::leader::LeaderRegistry,
     clock: &sui::clock::Clock,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}

@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_primitives::object_state`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_primitives::object_state;
 
-//! Interface for [`nexus_primitives::object_state`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Positional key for an object's exact stored layout.
 ///
@@ -17,37 +25,54 @@ public struct Inner() has copy, drop, store;
 public struct Witness() has copy, drop, store;
 
 /// Attach one stored layout and one package witness to a stable object.
-public native fun add<W: store, I: store>(id: &mut sui::object::UID, witness: W, inner: I);
+public fun add<W: store, I: store>(id: &mut sui::object::UID, witness: W, inner: I) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Borrow the exact stored layout without changing package authority.
-public native fun inner<I: store>(id: &sui::object::UID): &I;
+public fun inner<I: store>(id: &sui::object::UID): &I {
+    abort ELocalExecutionUnavailable
+}
 
 /// Borrow the exact stored layout after verifying package authority.
-public native fun inner_mut<W: store, I: store>(id: &mut sui::object::UID): &mut I;
+public fun inner_mut<W: store, I: store>(id: &mut sui::object::UID): &mut I {
+    abort ELocalExecutionUnavailable
+}
 
 /// Return whether the object accepts the exact witness type.
-public native fun has_witness<W: store>(id: &sui::object::UID): bool;
+public fun has_witness<W: store>(id: &sui::object::UID): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Require the object to accept the exact witness type.
-public native fun assert_witness<W: store>(id: &sui::object::UID);
+public fun assert_witness<W: store>(id: &sui::object::UID) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Replace an exact source witness with an exact target witness.
-public native fun replace_witness<Old: drop + store, New: store>(
-    id: &mut sui::object::UID,
-    witness: New,
-);
+public fun replace_witness<Old: drop + store, New: store>(id: &mut sui::object::UID, witness: New) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Remove and return the exact stored layout during a declared transition.
-public native fun take_inner<I: store>(id: &mut sui::object::UID): I;
+public fun take_inner<I: store>(id: &mut sui::object::UID): I {
+    abort ELocalExecutionUnavailable
+}
 
 /// Attach the target layout during a declared transition.
-public native fun add_inner<I: store>(id: &mut sui::object::UID, inner: I);
+public fun add_inner<I: store>(id: &mut sui::object::UID, inner: I) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Destroy a stable identity after removing its typed fields.
 ///
 /// The inner value is returned because only its defining module knows how to
 /// destroy resources contained by that layout.
-public native fun destroy<W: drop + store, I: store>(id: sui::object::UID): I;
+public fun destroy<W: drop + store, I: store>(id: sui::object::UID): I {
+    abort ELocalExecutionUnavailable
+}
 
 /// Require an upgrade capability whose latest package introduced `W`.
-public native fun assert_upgrade_cap<W>(cap: &sui::package::UpgradeCap);
+public fun assert_upgrade_cap<W>(cap: &sui::package::UpgradeCap) {
+    abort ELocalExecutionUnavailable
+}

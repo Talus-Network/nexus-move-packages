@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_interface::dag`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_interface::dag;
 
-//! Interface for [`nexus_interface::dag`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Capability witness for migration and identity replacement of one [`DAG`].
 public struct OverDAG has drop {}
@@ -117,85 +125,102 @@ public struct DAGFinalizedEvent has copy, drop {
 }
 
 /// Creates a new empty DAG and returns its bound owner capability.
-public native fun new(
+public fun new(
     ctx: &mut sui::tx_context::TxContext,
-): (DAG, nexus_primitives::owner_cap::CloneableOwnerCap<OverDAG>);
+): (DAG, nexus_primitives::owner_cap::CloneableOwnerCap<OverDAG>) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Alias for [`new`] that makes capability custody explicit at call sites.
-public native fun new_with_owner_cap(
+public fun new_with_owner_cap(
     ctx: &mut sui::tx_context::TxContext,
-): (DAG, nexus_primitives::owner_cap::CloneableOwnerCap<OverDAG>);
+): (DAG, nexus_primitives::owner_cap::CloneableOwnerCap<OverDAG>) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Consumes construction authority and freezes this DAG as an immutable promise.
 ///
 /// Any cloned owner capabilities become inert because a frozen object can never
 /// be passed by mutable reference. Callers should complete Tool registration and
 /// Agent skill binding before this transition.
-public native fun finalize(
-    self: DAG,
-    owner: nexus_primitives::owner_cap::CloneableOwnerCap<OverDAG>,
-);
+public fun finalize(self: DAG, owner: nexus_primitives::owner_cap::CloneableOwnerCap<OverDAG>) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Adds one vertex already bound to its registered Tool ID and immutable schema.
 ///
 /// Tool Registry is the active caller because it owns the authoritative registration mapping.
-public native fun add_vertex(
+public fun add_vertex(
     self: &mut DAG,
     owner: &mut nexus_primitives::owner_cap::CloneableOwnerCap<OverDAG>,
     name: nexus_interface::graph::Vertex,
     kind: nexus_interface::graph::VertexKind,
     tool_id: sui::object::ID,
     schema: nexus_interface::meta_schema::MetaSchema,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Configures the DAG wide default post failure action.
 ///
 /// Runtime precedence is vertex override, then DAG default, then implicit
 /// `Terminate`.
-public native fun with_post_failure_action(
+public fun with_post_failure_action(
     self: DAG,
     action: nexus_interface::graph::PostFailureAction,
-): DAG;
+): DAG {
+    abort ELocalExecutionUnavailable
+}
 
 /// Configures the vertex level post failure action override.
 ///
 /// Runtime precedence is vertex override, then DAG default, then implicit
 /// `Terminate`.
-public native fun with_vertex_post_failure_action(
+public fun with_vertex_post_failure_action(
     self: DAG,
     vertex: nexus_interface::graph::Vertex,
     action: nexus_interface::graph::PostFailureAction,
-): DAG;
+): DAG {
+    abort ELocalExecutionUnavailable
+}
 
 /// Selects the verifier for one offchain vertex. New vertices default to `None`.
-public native fun set_vertex_verifier_mode(
+public fun set_vertex_verifier_mode(
     self: &mut DAG,
     owner: &mut nexus_primitives::owner_cap::CloneableOwnerCap<OverDAG>,
     vertex: nexus_interface::graph::Vertex,
     mode: nexus_interface::verifier::ToolVerifierMode,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Add a new input port to the vertex which has to be provided by the client
 /// when they begin execution with the default entry group.
-public native fun with_entry_port(
+public fun with_entry_port(
     self: DAG,
     vertex: nexus_interface::graph::Vertex,
     entry_port: nexus_interface::graph::InputPort,
-): DAG;
+): DAG {
+    abort ELocalExecutionUnavailable
+}
 
 /// Add a new input port to the vertex which has to be provided by the client
 /// when they begin execution with the provided entry group.
-public native fun with_entry_port_in_group(
+public fun with_entry_port_in_group(
     self: DAG,
     vertex: nexus_interface::graph::Vertex,
     entry_port: nexus_interface::graph::InputPort,
     entry_group: nexus_interface::graph::EntryGroup,
-): DAG;
+): DAG {
+    abort ELocalExecutionUnavailable
+}
 
 /// Use this after [add_vertex] to add that vertex to the default entry group.
 ///
 /// See also [with_entry_in_group]
-public native fun with_entry(self: DAG, vertex: nexus_interface::graph::Vertex): DAG;
+public fun with_entry(self: DAG, vertex: nexus_interface::graph::Vertex): DAG {
+    abort ELocalExecutionUnavailable
+}
 
 /// Use this after [add_vertex] to add that vertex to the given entry group.
 ///
@@ -204,16 +229,18 @@ public native fun with_entry(self: DAG, vertex: nexus_interface::graph::Vertex):
 ///
 /// [begin_execution] will start execution of this vertex only if it has no
 /// input ports.
-public native fun with_entry_in_group(
+public fun with_entry_in_group(
     self: DAG,
     vertex: nexus_interface::graph::Vertex,
     entry_group: nexus_interface::graph::EntryGroup,
-): DAG;
+): DAG {
+    abort ELocalExecutionUnavailable
+}
 
 /// Adds a new edge to the DAG.
 /// The caller must ensure all constraints required by the workflow engine are
 /// upheld.
-public native fun with_edge(
+public fun with_edge(
     self: DAG,
     from_vertex: nexus_interface::graph::Vertex,
     from_variant: nexus_interface::graph::OutputVariant,
@@ -221,23 +248,29 @@ public native fun with_edge(
     to_vertex: nexus_interface::graph::Vertex,
     to_port: nexus_interface::graph::InputPort,
     kind: nexus_interface::graph::EdgeKind,
-): DAG;
+): DAG {
+    abort ELocalExecutionUnavailable
+}
 
 /// Adds a new output to the DAG.
-public native fun with_output(
+public fun with_output(
     self: DAG,
     vertex: nexus_interface::graph::Vertex,
     variant: nexus_interface::graph::OutputVariant,
     port: nexus_interface::graph::OutputPort,
-): DAG;
+): DAG {
+    abort ELocalExecutionUnavailable
+}
 
 /// The input port must not have a dynamic input source.
-public native fun with_default_value(
+public fun with_default_value(
     self: DAG,
     vertex: nexus_interface::graph::Vertex,
     port: nexus_interface::graph::InputPort,
     value: nexus_primitives::data::NexusData,
-): DAG;
+): DAG {
+    abort ELocalExecutionUnavailable
+}
 
 /// Consumes the input [DAG] and returns a copy of it with a new ID.
 ///
@@ -248,177 +281,231 @@ public native fun with_default_value(
 /// convenient time.
 ///
 /// (On Sui an object can be shared only in the tx that created it.)
-public native fun rebuild(
+public fun rebuild(
     self: DAG,
     owner: nexus_primitives::owner_cap::CloneableOwnerCap<OverDAG>,
     ctx: &mut sui::tx_context::TxContext,
-): (DAG, nexus_primitives::owner_cap::CloneableOwnerCap<OverDAG>);
+): (DAG, nexus_primitives::owner_cap::CloneableOwnerCap<OverDAG>) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether construction authority has been closed for this DAG.
-public native fun is_finalized(self: &DAG): bool;
+public fun is_finalized(self: &DAG): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Requires the DAG to be an immutable execution contract.
-public native fun assert_finalized(self: &DAG);
+public fun assert_finalized(self: &DAG) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Assert that `owner` controls this [`DAG`].
-public native fun assert_dag_owner(
+public fun assert_dag_owner(
     self: &DAG,
     owner: &mut nexus_primitives::owner_cap::CloneableOwnerCap<OverDAG>,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the fully qualified tool name of the given vertex.
 ///
 /// Aborts with `EVertexNotFound` if the vertex does not exist in the DAG.
-public native fun dag_vertex_tool_fqn(
+public fun dag_vertex_tool_fqn(
     self: &DAG,
     vertex: nexus_interface::graph::Vertex,
-): std::ascii::String;
+): std::ascii::String {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the number of vertices in the DAG.
-public native fun vertex_count(self: &DAG): u64;
+public fun vertex_count(self: &DAG): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns true if the DAG contains the given vertex.
-public native fun has_vertex(self: &DAG, vertex: nexus_interface::graph::Vertex): bool;
+public fun has_vertex(self: &DAG, vertex: nexus_interface::graph::Vertex): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether the vertex uses an on chain Tool.
-public native fun is_vertex_onchain_tool(self: &DAG, vertex: nexus_interface::graph::Vertex): bool;
+public fun is_vertex_onchain_tool(self: &DAG, vertex: nexus_interface::graph::Vertex): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the fully qualified tool name of the given runtime vertex.
 ///
 /// Aborts with `EVertexNotFound` if the vertex does not exist in the DAG.
-public native fun dag_runtime_vertex_tool_fqn(
+public fun dag_runtime_vertex_tool_fqn(
     self: &DAG,
     vertex: nexus_interface::graph::RuntimeVertex,
-): std::ascii::String;
+): std::ascii::String {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the stable Tool object ID pinned to a DAG vertex.
-public native fun dag_vertex_tool_id(
-    self: &DAG,
-    vertex: nexus_interface::graph::Vertex,
-): sui::object::ID;
+public fun dag_vertex_tool_id(self: &DAG, vertex: nexus_interface::graph::Vertex): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the immutable Tool interface bound to a DAG vertex.
-public native fun dag_vertex_meta_schema(
+public fun dag_vertex_meta_schema(
     self: &DAG,
     vertex: nexus_interface::graph::Vertex,
-): &nexus_interface::meta_schema::MetaSchema;
+): &nexus_interface::meta_schema::MetaSchema {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the verifier selected for an offchain vertex.
-public native fun dag_vertex_verifier_mode(
+public fun dag_vertex_verifier_mode(
     self: &DAG,
     vertex: nexus_interface::graph::Vertex,
-): nexus_interface::verifier::ToolVerifierMode;
+): nexus_interface::verifier::ToolVerifierMode {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the post failure action configured for a DAG vertex.
-public native fun dag_vertex_post_failure_action(
+public fun dag_vertex_post_failure_action(
     self: &DAG,
     vertex: nexus_interface::graph::Vertex,
     evidence_kind: nexus_interface::verifier::FailureEvidenceKind,
-): nexus_interface::graph::PostFailureAction;
+): nexus_interface::graph::PostFailureAction {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns true if the DAG contains the given entry group.
-public native fun has_entry_group(
-    self: &DAG,
-    entry_group: &nexus_interface::graph::EntryGroup,
-): bool;
+public fun has_entry_group(self: &DAG, entry_group: &nexus_interface::graph::EntryGroup): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the number of vertices in an entry group.
-public native fun entry_group_vertex_count(
+public fun entry_group_vertex_count(
     self: &DAG,
     entry_group: &nexus_interface::graph::EntryGroup,
-): u64;
+): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether an entry group contains a vertex.
-public native fun is_entry_group_vertex(
+public fun is_entry_group_vertex(
     self: &DAG,
     entry_group: &nexus_interface::graph::EntryGroup,
     vertex: &nexus_interface::graph::Vertex,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the number of required ports for one entry vertex.
-public native fun entry_group_vertex_port_count(
+public fun entry_group_vertex_port_count(
     self: &DAG,
     entry_group: &nexus_interface::graph::EntryGroup,
     vertex: &nexus_interface::graph::Vertex,
-): u64;
+): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether an entry vertex requires a port.
-public native fun is_entry_group_vertex_port(
+public fun is_entry_group_vertex_port(
     self: &DAG,
     entry_group: &nexus_interface::graph::EntryGroup,
     vertex: &nexus_interface::graph::Vertex,
     port: &nexus_interface::graph::InputPort,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the default value configured for a vertex input port, or none if there is none.
-public native fun default_value_for_input(
+public fun default_value_for_input(
     self: &DAG,
     vertex_input: nexus_interface::graph::VertexInputPort,
-): std::option::Option<nexus_primitives::data::NexusData>;
+): std::option::Option<nexus_primitives::data::NexusData> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the SHA 256 hash of a vertex's effective input payload, or an empty vector if any input port has no value.
-public native fun effective_input_payload_sha256(
+public fun effective_input_payload_sha256(
     self: &DAG,
     expected_vertex: nexus_interface::graph::RuntimeVertex,
     evaluations: &sui::vec_map::VecMap<
         nexus_interface::graph::InputPort,
         nexus_interface::graph::PortData,
     >,
-): vector<u8>;
+): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the number of input ports on the given vertex.
 ///
 /// Aborts with `EVertexNotFound` if the vertex does not exist in the DAG.
-public native fun vertex_input_ports_len(self: &DAG, vertex: nexus_interface::graph::Vertex): u64;
+public fun vertex_input_ports_len(self: &DAG, vertex: nexus_interface::graph::Vertex): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the input ports of the given vertex in sorted order.
 ///
 /// Aborts with `EVertexNotFound` if the vertex does not exist in the DAG.
-public native fun sorted_input_ports_for_vertex(
+public fun sorted_input_ports_for_vertex(
     self: &DAG,
     vertex: nexus_interface::graph::Vertex,
-): vector<nexus_interface::graph::InputPort>;
+): vector<nexus_interface::graph::InputPort> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether the vertex uses an off chain Tool.
 ///
 /// Aborts with `EVertexNotFound` if the vertex does not exist in the DAG.
-public native fun is_vertex_offchain_tool(self: &DAG, vertex: nexus_interface::graph::Vertex): bool;
+public fun is_vertex_offchain_tool(self: &DAG, vertex: nexus_interface::graph::Vertex): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the fully qualified tool names of all vertices in the DAG.
-public native fun vertex_tool_fqns(self: &DAG): vector<std::ascii::String>;
+public fun vertex_tool_fqns(self: &DAG): vector<std::ascii::String> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the names of all vertices in linked table order.
-public native fun vertex_names(self: &DAG): vector<nexus_interface::graph::Vertex>;
+public fun vertex_names(self: &DAG): vector<nexus_interface::graph::Vertex> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns true if the vertex has any outgoing edges.
-public native fun has_edges_from(self: &DAG, vertex: nexus_interface::graph::Vertex): bool;
+public fun has_edges_from(self: &DAG, vertex: nexus_interface::graph::Vertex): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns true if the vertex has an outgoing edge originating from the given output variant.
-public native fun has_outgoing_edges_for_variant(
+public fun has_outgoing_edges_for_variant(
     self: &DAG,
     vertex: nexus_interface::graph::Vertex,
     variant: nexus_interface::graph::OutputVariant,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the outgoing edges of the given vertex.
 ///
 /// Aborts if the vertex has no outgoing edges.
-public native fun edges_from(
+public fun edges_from(
     self: &DAG,
     vertex: nexus_interface::graph::Vertex,
-): &vector<nexus_interface::graph::Edge>;
+): &vector<nexus_interface::graph::Edge> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Resolve `_err_eval` failure policy from DAG policy and evidence kind.
-public native fun resolve_err_eval_failure_policy(
+public fun resolve_err_eval_failure_policy(
     self: &DAG,
     evaluated_vertex: nexus_interface::graph::RuntimeVertex,
     failure_evidence_kind: nexus_interface::verifier::FailureEvidenceKind,
-): nexus_interface::graph::PostFailureAction;
+): nexus_interface::graph::PostFailureAction {
+    abort ELocalExecutionUnavailable
+}
 
 /// Return the `_err_eval` outcome that matches the current output variant.
-public native fun err_eval_record_outcome_for_variant(
+public fun err_eval_record_outcome_for_variant(
     self: &DAG,
     evaluated_vertex: nexus_interface::graph::RuntimeVertex,
     failure_evidence_kind: nexus_interface::verifier::FailureEvidenceKind,
     variant: nexus_interface::graph::OutputVariant,
-): nexus_interface::graph::PostFailureAction;
+): nexus_interface::graph::PostFailureAction {
+    abort ELocalExecutionUnavailable
+}

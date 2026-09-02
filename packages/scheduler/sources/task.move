@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_scheduler::task`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_scheduler::task;
 
-//! Interface for [`nexus_scheduler::task`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Immutable authority for a [`Task`].
 public enum TaskController has copy, drop, store {
@@ -105,137 +113,216 @@ public struct AuthorizationFieldKey() has copy, drop, store;
 public struct PaymentReserveFieldKey() has copy, drop, store;
 
 /// Returns the referenced [`Task`] ID.
-public native fun task_id(self: &TaskPointer): sui::object::ID;
+public fun task_id(self: &TaskPointer): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the Task authorization.
-public native fun authorization(
-    self: &Task,
-): &nexus_interface::authorization::AgentSkillAuthorization;
+public fun authorization(self: &Task): &nexus_interface::authorization::AgentSkillAuthorization {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the Task payment reserve.
-public native fun payment_reserve(self: &Task): &nexus_interface::payment::TaskPaymentReserve;
+public fun payment_reserve(self: &Task): &nexus_interface::payment::TaskPaymentReserve {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the validation contract selected by this proposal.
 ///
 /// The selector is caller supplied metadata. Current admission must validate
 /// every safety relevant field and must never treat this value as provenance.
-public native fun admission_contract(self: &Task): std::type_name::TypeName;
+public fun admission_contract(self: &Task): std::type_name::TypeName {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the skill scheduling limits.
-public native fun schedule_policy(self: &Task): nexus_interface::agent::SkillSchedulePolicy;
+public fun schedule_policy(self: &Task): nexus_interface::agent::SkillSchedulePolicy {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the occurrence schedule.
-public native fun occurrence_schedule(self: &Task): &nexus_scheduler::schedule::Schedule;
+public fun occurrence_schedule(self: &Task): &nexus_scheduler::schedule::Schedule {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the immutable Task controller.
-public native fun controller(self: &Task): TaskController;
+public fun controller(self: &Task): TaskController {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the explicit Task status.
-public native fun status(self: &Task): TaskStatus;
+public fun status(self: &Task): TaskStatus {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the configured failure behavior.
-public native fun failure_mode(self: &Task): FailureMode;
+public fun failure_mode(self: &Task): FailureMode {
+    abort ELocalExecutionUnavailable
+}
 
 /// Derives the [`DAGExecution`] ID assigned to one [`Task`] occurrence.
-public native fun derive_execution_id(
-    task_id: sui::object::ID,
-    occurrence_id: u64,
-): sui::object::ID;
+public fun derive_execution_id(task_id: sui::object::ID, occurrence_id: u64): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether the Task is active.
-public native fun is_active(self: &Task): bool;
+public fun is_active(self: &Task): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether the Task is paused.
-public native fun is_paused(self: &Task): bool;
+public fun is_paused(self: &Task): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether the Task is canceled.
-public native fun is_canceled(self: &Task): bool;
+public fun is_canceled(self: &Task): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether current runtime permanently rejected the proposal.
-public native fun is_rejected(self: &Task): bool;
+public fun is_rejected(self: &Task): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the permanent rejection reason, when present.
-public native fun rejection_reason(self: &Task): std::option::Option<TaskRejectionReason>;
+public fun rejection_reason(self: &Task): std::option::Option<TaskRejectionReason> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether the Task has released its live resources.
-public native fun is_finalized(self: &Task): bool;
+public fun is_finalized(self: &Task): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the durable record for one allocated occurrence.
-public native fun occurrence_record(self: &Task, occurrence_id: u64): &OccurrenceRecord;
+public fun occurrence_record(self: &Task, occurrence_id: u64): &OccurrenceRecord {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the occurrence preserved by a record.
-public native fun occurrence(self: &OccurrenceRecord): nexus_scheduler::schedule::Occurrence;
+public fun occurrence(self: &OccurrenceRecord): nexus_scheduler::schedule::Occurrence {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the latest effective start advertised for an occurrence.
-public native fun last_effective_start_time_ms(self: &OccurrenceRecord): std::option::Option<u64>;
+public fun last_effective_start_time_ms(self: &OccurrenceRecord): std::option::Option<u64> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the monotonic lifecycle state preserved by a record.
-public native fun state(self: &OccurrenceRecord): OccurrenceState;
+public fun state(self: &OccurrenceRecord): OccurrenceState {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether an occurrence has not left its schedule.
-public native fun is_scheduled(self: OccurrenceState): bool;
+public fun is_scheduled(self: OccurrenceState): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether an occurrence has been dispatched but not settled.
-public native fun is_dispatched(self: OccurrenceState): bool;
+public fun is_dispatched(self: OccurrenceState): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether an occurrence expired before dispatch.
-public native fun is_missed(self: OccurrenceState): bool;
+public fun is_missed(self: OccurrenceState): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether an occurrence was withdrawn before dispatch.
-public native fun is_withdrawn(self: OccurrenceState): bool;
+public fun is_withdrawn(self: OccurrenceState): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether a dispatched occurrence reached a terminal outcome.
-public native fun is_settled(self: OccurrenceState): bool;
+public fun is_settled(self: OccurrenceState): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the related [`DAGExecution`] ID after dispatch.
-public native fun execution_id(self: OccurrenceState): std::option::Option<sui::object::ID>;
+public fun execution_id(self: OccurrenceState): std::option::Option<sui::object::ID> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the dispatch timestamp after dispatch.
-public native fun dispatched_at_ms(self: OccurrenceState): std::option::Option<u64>;
+public fun dispatched_at_ms(self: OccurrenceState): std::option::Option<u64> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the expiration timestamp for a missed occurrence.
-public native fun missed_at_ms(self: OccurrenceState): std::option::Option<u64>;
+public fun missed_at_ms(self: OccurrenceState): std::option::Option<u64> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns why an occurrence was withdrawn.
-public native fun withdrawal_reason(
+public fun withdrawal_reason(
     self: OccurrenceState,
-): std::option::Option<nexus_scheduler::schedule::OccurrenceWithdrawalReason>;
+): std::option::Option<nexus_scheduler::schedule::OccurrenceWithdrawalReason> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the settlement timestamp for a settled occurrence.
-public native fun settled_at_ms(self: OccurrenceState): std::option::Option<u64>;
+public fun settled_at_ms(self: OccurrenceState): std::option::Option<u64> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the terminal outcome for a settled occurrence.
-public native fun succeeded(self: OccurrenceState): std::option::Option<bool>;
+public fun succeeded(self: OccurrenceState): std::option::Option<bool> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether an occurrence remains in flight.
-public native fun is_in_flight(self: &Task, occurrence_id: u64): bool;
+public fun is_in_flight(self: &Task, occurrence_id: u64): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the number of in flight occurrences.
-public native fun in_flight_count(self: &Task): u64;
+public fun in_flight_count(self: &Task): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the execution correlated with an occurrence.
-public native fun in_flight_execution_id(self: &Task, occurrence_id: u64): sui::object::ID;
+public fun in_flight_execution_id(self: &Task, occurrence_id: u64): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether reserve funds cover one occurrence.
-public native fun is_awaiting_funds(self: &Task): bool;
+public fun is_awaiting_funds(self: &Task): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether the Task can release its live resources.
-public native fun can_close(self: &Task): bool;
+public fun can_close(self: &Task): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns an address controller.
-public native fun address_controller(address: address): TaskController;
+public fun address_controller(address: address): TaskController {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns an Agent controller.
-public native fun agent_controller(agent_id: sui::object::ID): TaskController;
+public fun agent_controller(agent_id: sui::object::ID): TaskController {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the default continue behavior.
-public native fun continue_on_failure(): FailureMode;
+public fun continue_on_failure(): FailureMode {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns explicit pause behavior.
-public native fun pause_on_failure(): FailureMode;
+public fun pause_on_failure(): FailureMode {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether a failure mode continues.
-public native fun is_continue(mode: FailureMode): bool;
+public fun is_continue(mode: FailureMode): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether a [`TaskStatus`] is paused.
-public native fun status_is_paused(status: TaskStatus): bool;
+public fun status_is_paused(status: TaskStatus): bool {
+    abort ELocalExecutionUnavailable
+}

@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_interface::onchain_tool_result`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_interface::onchain_tool_result;
 
-//! Interface for [`nexus_interface::onchain_tool_result`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Durable result layout for a canonical on chain Tool invocation.
 public struct OnchainToolResult has key {
@@ -34,27 +42,31 @@ public struct InputCommitment has store {
 }
 
 /// Creates an owned empty result bound to the execution UID that created the worksheet.
-public native fun new(
+public fun new(
     execution_uid: &sui::object::UID,
     worksheet: &nexus_primitives::proof_of_uid::ProofOfUID,
     stamp: &nexus_interface::authorization::AgentVertexAuthorizationStamp,
     ctx: &mut sui::tx_context::TxContext,
-): OnchainToolResult;
+): OnchainToolResult {
+    abort ELocalExecutionUnavailable
+}
 
 /// Finalizes and shares the result after every required UID has participated.
 ///
 /// The result satisfies its own requirement before completing
 /// [UIDRequirements]. This verifies that no requirements remain and binds them
 /// to this exact result without restricting which caller may complete the operation.
-public native fun finalize_and_share(
+public fun finalize_and_share(
     result: OnchainToolResult,
     requirements: nexus_primitives::proof_of_uid::UIDRequirements,
     output: nexus_primitives::tagged_output::TaggedOutput,
     ctx: &mut sui::tx_context::TxContext,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Consumes and deletes the finalized result, returning the exact durable contents workflow needs.
-public native fun consume(
+public fun consume(
     result: OnchainToolResult,
     execution_uid: &sui::object::UID,
 ): (
@@ -63,16 +75,26 @@ public native fun consume(
     sui::vec_map::VecMap<vector<u8>, nexus_primitives::data::NexusData>,
     vector<u8>,
     address,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// The object ID of the result.
-public native fun id(result: &OnchainToolResult): sui::object::ID;
+public fun id(result: &OnchainToolResult): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Whether the result has been finalized by its tool.
-public native fun is_finalized(result: &OnchainToolResult): bool;
+public fun is_finalized(result: &OnchainToolResult): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// The ID of the execution this result belongs to.
-public native fun execution_id(result: &OnchainToolResult): sui::object::ID;
+public fun execution_id(result: &OnchainToolResult): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the canonical resolved input commitment stamped for this Tool invocation.
-public native fun input_commitment(result: &OnchainToolResult): vector<u8>;
+public fun input_commitment(result: &OnchainToolResult): vector<u8> {
+    abort ELocalExecutionUnavailable
+}

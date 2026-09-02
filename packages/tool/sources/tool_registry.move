@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_tool::tool_registry`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_tool::tool_registry;
 
-//! Interface for [`nexus_tool::tool_registry`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Location and invocation identity of an off chain or on chain Tool.
 public enum ToolRef has copy, drop, store {
@@ -165,7 +173,7 @@ public struct ExternalVerifierRegisteredEvent has copy, drop {
 /// # Payment Tickets
 ///
 /// The returned payment capability controls invocation price and tickets.
-public native fun register_off_chain_tool(
+public fun register_off_chain_tool(
     self: &mut ToolRegistry,
     fqn: std::ascii::String,
     url: vector<u8>,
@@ -180,7 +188,9 @@ public native fun register_off_chain_tool(
     Tool,
     nexus_primitives::owner_cap::CloneableOwnerCap<nexus_tool::tool_authority::OverTool>,
     nexus_primitives::owner_cap::CloneableOwnerCap<nexus_tool::tool_cashier::OverToolCashier>,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Registers a new on chain Tool with an immutable schema and invocation price.
 ///
@@ -195,7 +205,7 @@ public native fun register_off_chain_tool(
 /// # Owner Cap
 ///
 /// The returned Tool owner capability must be transferred or otherwise consumed.
-public native fun register_on_chain_tool(
+public fun register_on_chain_tool(
     self: &mut ToolRegistry,
     package_address: address,
     module_name: std::ascii::String,
@@ -212,13 +222,15 @@ public native fun register_on_chain_tool(
     Tool,
     nexus_primitives::owner_cap::CloneableOwnerCap<nexus_tool::tool_authority::OverTool>,
     nexus_primitives::owner_cap::CloneableOwnerCap<nexus_tool::tool_cashier::OverToolCashier>,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Registers an on chain Tool whose `execute` function requires a vertex authorization value first.
 ///
 /// The caller/SDK must set this only after normalized signature analysis proves
 /// execute takes `nexus_primitives::authorization::ProvenValue<nexus_interface::authorization::AgentVertexAuthorization>` first.
-public native fun register_on_chain_tool_with_workflow_authorization_cap(
+public fun register_on_chain_tool_with_workflow_authorization_cap(
     self: &mut ToolRegistry,
     package_address: address,
     module_name: std::ascii::String,
@@ -235,23 +247,27 @@ public native fun register_on_chain_tool_with_workflow_authorization_cap(
     Tool,
     nexus_primitives::owner_cap::CloneableOwnerCap<nexus_tool::tool_authority::OverTool>,
     nexus_primitives::owner_cap::CloneableOwnerCap<nexus_tool::tool_cashier::OverToolCashier>,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Atomically retires a Tool from every live registry lookup and verifier record.
-public native fun unregister(
+public fun unregister(
     self: &mut Tool,
     registry: &mut ToolRegistry,
     owner_cap: &mut nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_tool::tool_authority::OverTool,
     >,
     clock: &sui::clock::Clock,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Registers a previously unregistered [`Tool`] again.
 ///
 /// Rebuilds base registry state with the current collateral and lock policy,
 /// a fresh timeout, and no verifier support.
-public native fun reregister_tool(
+public fun reregister_tool(
     self: &mut Tool,
     registry: &mut ToolRegistry,
     owner_cap: &mut nexus_primitives::owner_cap::CloneableOwnerCap<
@@ -259,291 +275,366 @@ public native fun reregister_tool(
     >,
     pay_with: &mut sui::coin::Coin<talus::us::US>,
     timeout_ms: u64,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Return collateral to a tool owner.
-public native fun claim_collateral(
+public fun claim_collateral(
     self: &mut Tool,
     owner_cap: &mut nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_tool::tool_authority::OverTool,
     >,
     clock: &sui::clock::Clock,
-): sui::balance::Balance<talus::us::US>;
+): sui::balance::Balance<talus::us::US> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns a new [CloneableOwnerCap] for the given tool but with the given
 /// generic type that doesn't have any permissions within this module.
 /// Works for both off chain and on chain Tools.
 ///
 /// See also [assert_tool_owner_generic].
-public native fun deescalate<T: drop>(
+public fun deescalate<T: drop>(
     self: &Tool,
     owner_cap: &mut nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_tool::tool_authority::OverTool,
     >,
     witness: T,
     ctx: &mut sui::tx_context::TxContext,
-): nexus_primitives::owner_cap::CloneableOwnerCap<T>;
+): nexus_primitives::owner_cap::CloneableOwnerCap<T> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates delegated cashier administration from full [`Tool`] ownership.
-public native fun delegate_cashier_admin(
+public fun delegate_cashier_admin(
     self: &Tool,
     owner_cap: &mut nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_tool::tool_authority::OverTool,
     >,
     ctx: &mut sui::tx_context::TxContext,
-): nexus_primitives::owner_cap::CloneableOwnerCap<nexus_tool::tool_cashier::OverToolCashier>;
+): nexus_primitives::owner_cap::CloneableOwnerCap<nexus_tool::tool_cashier::OverToolCashier> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Assert that the owner cap is for the given tool but allows any generic
 /// type to be used.
 ///
 /// See also [deescalate].
-public native fun assert_tool_owner_generic<T>(
+public fun assert_tool_owner_generic<T>(
     self: &Tool,
     owner_cap: &mut nexus_primitives::owner_cap::CloneableOwnerCap<T>,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether the collateral lock duration has elapsed since the tool was unregistered.
 ///
 /// Returns `false` if the tool is still registered.
-public native fun did_unregister_period_pass(self: &Tool, clock: &sui::clock::Clock): bool;
+public fun did_unregister_period_pass(self: &Tool, clock: &sui::clock::Clock): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether the tool is currently registered (not unregistered).
-public native fun is_registered(self: &Tool): bool;
+public fun is_registered(self: &Tool): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether the tool has been marked verified by the slashing authority.
-public native fun is_verified(self: &Tool): bool;
+public fun is_verified(self: &Tool): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Assert that a tool is registered and not unregistered.
-public native fun assert_tool_registered(self: &Tool);
+public fun assert_tool_registered(self: &Tool) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the fully qualified name of the tool.
-public native fun fqn(self: &Tool): std::ascii::String;
+public fun fqn(self: &Tool): std::ascii::String {
+    abort ELocalExecutionUnavailable
+}
 
 /// Asserts a DAG vertex is bound to this registry's exact Tool ID and immutable schema.
-public native fun assert_registered_vertex(
+public fun assert_registered_vertex(
     self: &ToolRegistry,
     dag_object: &nexus_interface::dag::DAG,
     vertex: nexus_interface::graph::Vertex,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Asserts every DAG vertex still matches this registry's live Tool state.
-public native fun assert_registered_dag(
-    self: &ToolRegistry,
-    dag_object: &nexus_interface::dag::DAG,
-);
+public fun assert_registered_dag(self: &ToolRegistry, dag_object: &nexus_interface::dag::DAG) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the configured timeout (in milliseconds) for the tool with the given FQN.
-public native fun tool_timeout_ms(self: &ToolRegistry, fqn: std::ascii::String): u64;
+public fun tool_timeout_ms(self: &ToolRegistry, fqn: std::ascii::String): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Build the timeout window for a runtime DAG vertex.
-public native fun walk_timeout_ms_for_runtime_vertex(
+public fun walk_timeout_ms_for_runtime_vertex(
     self: &ToolRegistry,
     dag_object: &nexus_interface::dag::DAG,
     vertex: nexus_interface::graph::RuntimeVertex,
-): u64;
+): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Return whether a tool FQN is registered in this registry.
-public native fun contains_tool(self: &ToolRegistry, fqn: std::ascii::String): bool;
+public fun contains_tool(self: &ToolRegistry, fqn: std::ascii::String): bool {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun contains_tool_id(self: &ToolRegistry, tool_id: sui::object::ID): bool;
+public fun contains_tool_id(self: &ToolRegistry, tool_id: sui::object::ID): bool {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun tool_id(self: &ToolRegistry, fqn: std::ascii::String): sui::object::ID;
+public fun tool_id(self: &ToolRegistry, fqn: std::ascii::String): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the current invocation price in MIST for a registered Tool.
-public native fun invocation_cost_mist(self: &ToolRegistry, fqn: std::ascii::String): u64;
+public fun invocation_cost_mist(self: &ToolRegistry, fqn: std::ascii::String): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Records the current Tool price on an execution payment.
 ///
 /// An unregistered Tool is snapshotted with a zero price so callers can
 /// preserve a complete execution snapshot before liveness is checked.
-public native fun snapshot_invocation_cost(
+public fun snapshot_invocation_cost(
     self: &ToolRegistry,
     execution_payment: &mut nexus_interface::payment::ExecutionPayment,
     fqn: std::ascii::String,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Sets the invocation price in MIST using delegated [`OverToolCashier`] authority.
-public native fun set_invocation_cost_mist(
+public fun set_invocation_cost_mist(
     self: &mut ToolRegistry,
     tool: &Tool,
     cashier_admin: &mut nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_tool::tool_cashier::OverToolCashier,
     >,
     cost: u64,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun verifier_support(
+public fun verifier_support(
     self: &ToolRegistry,
     tool_id: sui::object::ID,
-): std::option::Option<nexus_interface::verifier::ToolVerifierSupport>;
+): std::option::Option<nexus_interface::verifier::ToolVerifierSupport> {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun supports_verifier_mode(
+public fun supports_verifier_mode(
     self: &ToolRegistry,
     tool_id: sui::object::ID,
     mode: nexus_interface::verifier::ToolVerifierMode,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Adds a DAG vertex bound to this registry's current stable Tool ID and immutable schema.
-public native fun add_vertex_to_dag(
+public fun add_vertex_to_dag(
     self: &ToolRegistry,
     dag_object: &mut nexus_interface::dag::DAG,
     dag_owner: &mut nexus_primitives::owner_cap::CloneableOwnerCap<nexus_interface::dag::OverDAG>,
     vertex: nexus_interface::graph::Vertex,
     kind: nexus_interface::graph::VertexKind,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Selects a per vertex mode after checking the Tool's one global support value.
-public native fun set_registered_vertex_verifier_mode(
+public fun set_registered_vertex_verifier_mode(
     self: &ToolRegistry,
     dag_object: &mut nexus_interface::dag::DAG,
     dag_owner: &mut nexus_primitives::owner_cap::CloneableOwnerCap<nexus_interface::dag::OverDAG>,
     vertex: nexus_interface::graph::Vertex,
     mode: nexus_interface::verifier::ToolVerifierMode,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Owner authorized initial registration of one External verifier.
-public native fun register_external_verifier(
+public fun register_external_verifier(
     self: &mut ToolRegistry,
     tool: &Tool,
     owner_cap: &mut nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_tool::tool_authority::OverTool,
     >,
     registration: nexus_tool::external_verifier::ExternalVerifierRegistration,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether a Tool has external verifier configuration.
-public native fun has_external_verifier(self: &ToolRegistry, tool: sui::object::ID): bool;
+public fun has_external_verifier(self: &ToolRegistry, tool: sui::object::ID): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the external verifier method configured for a Tool.
-public native fun external_verifier_method(
+public fun external_verifier_method(
     self: &ToolRegistry,
     tool: sui::object::ID,
-): nexus_interface::verifier::VerifierMethodId;
+): nexus_interface::verifier::VerifierMethodId {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the witness configured for a Tool external verifier.
-public native fun external_verifier_witness(
-    self: &ToolRegistry,
-    tool: sui::object::ID,
-): sui::object::ID;
+public fun external_verifier_witness(self: &ToolRegistry, tool: sui::object::ID): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the immutable shared objects configured for a Tool external verifier.
-public native fun external_verifier_objects(
+public fun external_verifier_objects(
     self: &ToolRegistry,
     tool: sui::object::ID,
-): vector<sui::object::ID>;
+): vector<sui::object::ID> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Return whether the registered on chain tool requires workflow authorization
 /// cap as its first execute argument.
-public native fun on_chain_tool_takes_workflow_authorization_cap_first(
+public fun on_chain_tool_takes_workflow_authorization_cap_first(
     self: &ToolRegistry,
     fqn: std::ascii::String,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Return whether a DAG runtime vertex requires a workflow authorization grant for execution.
-public native fun vertex_requires_authorization_grant(
+public fun vertex_requires_authorization_grant(
     self: &ToolRegistry,
     dag_object: &nexus_interface::dag::DAG,
     vertex: nexus_interface::graph::RuntimeVertex,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Assert that `witness_id` is the witness registered for an on chain tool.
-public native fun assert_on_chain_tool_witness(
+public fun assert_on_chain_tool_witness(
     self: &ToolRegistry,
     fqn: std::ascii::String,
     witness_id: sui::object::ID,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
-public native fun on_chain_tool_witness_id(
-    self: &ToolRegistry,
-    fqn: std::ascii::String,
-): sui::object::ID;
+public fun on_chain_tool_witness_id(self: &ToolRegistry, fqn: std::ascii::String): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Sets the collateral in US base units required to register a Tool.
-public native fun set_us_collateral_to_lock(
+public fun set_us_collateral_to_lock(
     self: &mut ToolRegistry,
     admin: &ToolRegistryAdminCap,
     new_us_collateral_to_lock: u64,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Sets the collateral lock duration in milliseconds after Tool removal.
-public native fun set_lock_duration_ms(
+public fun set_lock_duration_ms(
     self: &mut ToolRegistry,
     admin: &ToolRegistryAdminCap,
     new_duration_ms: u64,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Takes the given amount of collateral from a [`Tool`].
 ///
 /// If the remaining vault is below the requirement configured by
 /// [`set_us_collateral_to_lock`], an active [`Tool`] is retired. A retired
 /// [`Tool`] keeps its original retirement time.
-public native fun slash(
+public fun slash(
     self: &mut Tool,
     registry: &mut ToolRegistry,
     admin: &ToolRegistryAdminCap,
     amount: u64,
     clock: &sui::clock::Clock,
-): sui::balance::Balance<talus::us::US>;
+): sui::balance::Balance<talus::us::US> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Set a tool's verification status.
-public native fun set_verified(
+public fun set_verified(
     self: &mut Tool,
     registry: &ToolRegistry,
     admin: &ToolRegistryAdminCap,
     verified: bool,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Update the URL of an off chain (HTTP) tool.
 ///
 /// The tool must be registered and the caller must hold the owner cap.
-public native fun update_off_chain_tool_url(
+public fun update_off_chain_tool_url(
     self: &mut Tool,
     owner_cap: &mut nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_tool::tool_authority::OverTool,
     >,
     new_url: vector<u8>,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Updates the package address of an active on chain Tool using its bound owner capability.
-public native fun migrate_on_chain_tool_package(
+public fun migrate_on_chain_tool_package(
     self: &mut Tool,
     owner_cap: &mut nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_tool::tool_authority::OverTool,
     >,
     target_package: address,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Updates the mutable description of a registered Tool.
 ///
 /// The registration time [`MetaSchema`] remains immutable because DAG bindings and the registry
 /// snapshot rely on that exact schema. Description changes require renewed verification.
-public native fun update_tool_metadata(
+public fun update_tool_metadata(
     self: &mut Tool,
     owner_cap: &mut nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_tool::tool_authority::OverTool,
     >,
     description: vector<u8>,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Update a tool timeout.
 ///
 /// The tool must be registered and the caller must hold the owner cap.
-public native fun update_tool_timeout(
+public fun update_tool_timeout(
     self: &Tool,
     registry: &mut ToolRegistry,
     owner_cap: &mut nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_tool::tool_authority::OverTool,
     >,
     timeout_ms: u64,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Declares registered key verifier support for a Tool.
 ///
 /// Verification still requires live Tool and Leader key bindings.
-public native fun configure_registered_key_support(
+public fun configure_registered_key_support(
     registry: &mut ToolRegistry,
     tool: &Tool,
     owner_cap: &mut nexus_primitives::owner_cap::CloneableOwnerCap<
         nexus_tool::tool_authority::OverTool,
     >,
-);
+) {
+    abort ELocalExecutionUnavailable
+}

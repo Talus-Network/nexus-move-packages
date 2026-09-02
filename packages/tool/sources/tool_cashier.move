@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_tool::tool_cashier`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_tool::tool_cashier;
 
-//! Interface for [`nexus_tool::tool_cashier`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Shared policy directory and completed invocation inbox for one Tool.
 public struct ToolCashier has key {
@@ -64,133 +72,181 @@ public struct PolicyRemovedEvent has copy, drop {
 }
 
 /// Accepts configless policy witness [P].
-public native fun add_policy<P: drop>(
+public fun add_policy<P: drop>(
     self: &mut ToolCashier,
     owner_cap: &nexus_primitives::owner_cap::CloneableOwnerCap<OverToolCashier>,
     _: P,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Accepts policy witness [P] and stores its typed configuration.
-public native fun add_policy_with_config<P: drop, C: store>(
+public fun add_policy_with_config<P: drop, C: store>(
     self: &mut ToolCashier,
     owner_cap: &nexus_primitives::owner_cap::CloneableOwnerCap<OverToolCashier>,
     policy: P,
     config: C,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Stops accepting configless policy witness [P].
 ///
 /// Existing Invocations remain valid because their material terms are stored
 /// in the exact [Invocation] objects.
-public native fun remove_policy<P: drop>(
+public fun remove_policy<P: drop>(
     self: &mut ToolCashier,
     owner_cap: &nexus_primitives::owner_cap::CloneableOwnerCap<OverToolCashier>,
     _: P,
-);
+) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Stops accepting policy witness [P] and returns its typed configuration.
-public native fun remove_policy_with_config<P: drop, C: store>(
+public fun remove_policy_with_config<P: drop, C: store>(
     self: &mut ToolCashier,
     owner_cap: &nexus_primitives::owner_cap::CloneableOwnerCap<OverToolCashier>,
     policy: P,
-): C;
+): C {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the configuration for accepted policy witness [P].
-public native fun policy_config<P: drop, C: store>(self: &ToolCashier, _: P): &C;
+public fun policy_config<P: drop, C: store>(self: &ToolCashier, _: P): &C {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns mutable owner access to the configuration for policy witness [P].
-public native fun policy_config_mut<P: drop, C: store>(
+public fun policy_config_mut<P: drop, C: store>(
     self: &mut ToolCashier,
     owner_cap: &nexus_primitives::owner_cap::CloneableOwnerCap<OverToolCashier>,
     _: P,
-): &mut C;
+): &mut C {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns whether policy witness [P] is accepted for new invocations.
-public native fun has_policy<P: drop>(self: &ToolCashier): bool;
+public fun has_policy<P: drop>(self: &ToolCashier): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the accepted policy types for off chain discovery.
-public native fun policies(self: &ToolCashier): &sui::vec_set::VecSet<std::type_name::TypeName>;
+public fun policies(self: &ToolCashier): &sui::vec_set::VecSet<std::type_name::TypeName> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Derives the canonical policy account for [beneficiary].
-public native fun derive_policy_account_id<P: drop>(
+public fun derive_policy_account_id<P: drop>(
     cashier: sui::object::ID,
     beneficiary: nexus_interface::payment::PaymentSourceKind,
-): sui::object::ID;
+): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Creates the canonical policy account for [beneficiary].
 ///
 /// Creation mutates [ToolCashier] only when the account is first claimed.
-public native fun new_policy_account<P: drop, State: store>(
+public fun new_policy_account<P: drop, State: store>(
     self: &mut ToolCashier,
     beneficiary: nexus_interface::payment::PaymentSourceKind,
     _: P,
     state: State,
-): PolicyAccount<P, State>;
+): PolicyAccount<P, State> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Shares a canonical policy account.
-public native fun share_policy_account<P: drop, State: store>(account: PolicyAccount<P, State>);
+public fun share_policy_account<P: drop, State: store>(account: PolicyAccount<P, State>) {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the canonical policy account ID.
-public native fun policy_account_id<P: drop, State: store>(
+public fun policy_account_id<P: drop, State: store>(
     account: &PolicyAccount<P, State>,
-): sui::object::ID;
+): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the cashier that created [account].
-public native fun policy_account_cashier<P: drop, State: store>(
+public fun policy_account_cashier<P: drop, State: store>(
     account: &PolicyAccount<P, State>,
-): sui::object::ID;
+): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the beneficiary authorized by [account].
-public native fun policy_account_beneficiary<P: drop, State: store>(
+public fun policy_account_beneficiary<P: drop, State: store>(
     account: &PolicyAccount<P, State>,
-): nexus_interface::payment::PaymentSourceKind;
+): nexus_interface::payment::PaymentSourceKind {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns policy module access to the state in [account].
-public native fun policy_account_state<P: drop, State: store>(
+public fun policy_account_state<P: drop, State: store>(
     account: &PolicyAccount<P, State>,
     _: P,
-): &State;
+): &State {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns mutable policy module access to the state in [account].
-public native fun policy_account_state_mut<P: drop, State: store>(
+public fun policy_account_state_mut<P: drop, State: store>(
     account: &mut PolicyAccount<P, State>,
     _: P,
-): &mut State;
+): &mut State {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns policy module access to the receiving identity of [account].
-public native fun policy_account_uid_mut<P: drop, State: store>(
+public fun policy_account_uid_mut<P: drop, State: store>(
     account: &mut PolicyAccount<P, State>,
     _: P,
-): &mut sui::object::UID;
+): &mut sui::object::UID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Transfers SUI to the [ToolCashier] inbox.
-public native fun send_deposit(
+public fun send_deposit(
     self: &ToolCashier,
     funds: sui::balance::Balance<sui::sui::SUI>,
     ctx: &mut sui::tx_context::TxContext,
-): sui::object::ID;
+): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Receives a batch of deposits under Tool owner authority.
-public native fun collect_deposits(
+public fun collect_deposits(
     self: &mut ToolCashier,
     owner_cap: &nexus_primitives::owner_cap::CloneableOwnerCap<OverToolCashier>,
     deposits: vector<sui::transfer::Receiving<CashierDeposit>>,
-): sui::balance::Balance<sui::sui::SUI>;
+): sui::balance::Balance<sui::sui::SUI> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the fully qualified name of the Tool served by [ToolCashier].
-public native fun tool_fqn(self: &ToolCashier): std::ascii::String;
+public fun tool_fqn(self: &ToolCashier): std::ascii::String {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the stable Tool object ID served by [ToolCashier].
-public native fun tool(self: &ToolCashier): sui::object::ID;
+public fun tool(self: &ToolCashier): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the object ID of [ToolCashier].
-public native fun id(self: &ToolCashier): sui::object::ID;
+public fun id(self: &ToolCashier): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Derives the stable [ToolCashier] ID for a Tool ID.
-public native fun derive_id(tool: sui::object::ID): sui::object::ID;
+public fun derive_id(tool: sui::object::ID): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Verifies exact Tool owner authority for policy module operations.
-public native fun assert_owner(
+public fun assert_owner(
     self: &ToolCashier,
     owner_cap: &nexus_primitives::owner_cap::CloneableOwnerCap<OverToolCashier>,
-);
+) {
+    abort ELocalExecutionUnavailable
+}

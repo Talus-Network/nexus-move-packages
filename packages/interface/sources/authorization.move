@@ -1,8 +1,16 @@
+/// Interface for the published [`nexus_interface::authorization`] module.
+///
+/// Function calls resolve to the published package during network execution.
+/// The local bodies in this repository abort with
+/// [`ELocalExecutionUnavailable`]. This lets Move tests load the module and
+/// add extensions without reproducing published Nexus behavior.
+#[allow(unused_variable, unused_type_parameter)]
 module nexus_interface::authorization;
 
-//! Interface for [`nexus_interface::authorization`].
-//!
-//! Calls resolve to the published package.
+/// Abort reason used when a local test invokes published Nexus behavior.
+#[error]
+const ELocalExecutionUnavailable: vector<u8> =
+    b"Nexus functions require the published Testnet or Mainnet package";
 
 /// Scheduled skill level authorization object.
 ///
@@ -57,102 +65,130 @@ public struct AgentVertexAuthorizationStamp has copy, drop, store {
 }
 
 /// Returns the skill ID of the vertex authorization.
-public native fun agent_vertex_authorization_skill_id(self: &AgentVertexAuthorization): u64;
+public fun agent_vertex_authorization_skill_id(self: &AgentVertexAuthorization): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the interface version of the vertex authorization.
-public native fun agent_vertex_authorization_interface_version(
+public fun agent_vertex_authorization_interface_version(
     self: &AgentVertexAuthorization,
-): nexus_interface::version::InterfaceVersion;
+): nexus_interface::version::InterfaceVersion {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the DAG ID of the vertex authorization.
-public native fun agent_vertex_authorization_dag_id(
-    self: &AgentVertexAuthorization,
-): sui::object::ID;
+public fun agent_vertex_authorization_dag_id(self: &AgentVertexAuthorization): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the vertex of the vertex authorization.
-public native fun agent_vertex_authorization_vertex(
-    self: &AgentVertexAuthorization,
-): std::ascii::String;
+public fun agent_vertex_authorization_vertex(self: &AgentVertexAuthorization): std::ascii::String {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the Task bound to the vertex authorization.
-public native fun agent_vertex_authorization_task_id(
-    self: &AgentVertexAuthorization,
-): sui::object::ID;
+public fun agent_vertex_authorization_task_id(self: &AgentVertexAuthorization): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Constructs the exact context bound to a vertex authorization worksheet stamp.
-public native fun agent_vertex_authorization_context(
+public fun agent_vertex_authorization_context(
     agent_id: sui::object::ID,
     skill_id: u64,
     interface_version: nexus_interface::version::InterfaceVersion,
     execution_id: sui::object::ID,
     vertex: std::ascii::String,
     task_id: sui::object::ID,
-): AgentVertexAuthorizationContext;
+): AgentVertexAuthorizationContext {
+    abort ELocalExecutionUnavailable
+}
 
 /// Encodes a vertex authorization context into its BCS byte representation.
-public native fun encode_agent_vertex_authorization_context(
+public fun encode_agent_vertex_authorization_context(
     agent_id: sui::object::ID,
     skill_id: u64,
     interface_version: nexus_interface::version::InterfaceVersion,
     execution_id: sui::object::ID,
     vertex: std::ascii::String,
     task_id: sui::object::ID,
-): vector<u8>;
+): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Constructs the execution stamp stored on a Tool result worksheet.
-public native fun agent_vertex_authorization_stamp(
+public fun agent_vertex_authorization_stamp(
     context: AgentVertexAuthorizationContext,
     input_commitment: vector<u8>,
-): AgentVertexAuthorizationStamp;
+): AgentVertexAuthorizationStamp {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the canonical 32 byte input commitment carried by the stamp.
-public native fun agent_vertex_authorization_stamp_input_commitment(
+public fun agent_vertex_authorization_stamp_input_commitment(
     stamp: &AgentVertexAuthorizationStamp,
-): vector<u8>;
+): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Authenticates the stamp against the worksheet and returns its input commitment.
-public native fun worksheet_input_commitment(
+public fun worksheet_input_commitment(
     worksheet: &nexus_primitives::proof_of_uid::ProofOfUID,
     stamp: &AgentVertexAuthorizationStamp,
-): vector<u8>;
+): vector<u8> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns true only if the vertex authorization derives the exact execution stamp on the worksheet.
-public native fun authorization_matches_worksheet(
+public fun authorization_matches_worksheet(
     authorization: &AgentVertexAuthorization,
     by: sui::object::ID,
     worksheet: &nexus_primitives::proof_of_uid::ProofOfUID,
     stamp: &AgentVertexAuthorizationStamp,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Consumes an execution proven vertex authorization for the matching worksheet recipient.
-public native fun consume_verified_for_worksheet_as_recipient(
+public fun consume_verified_for_worksheet_as_recipient(
     authorization: nexus_primitives::authorization::ProvenValue<AgentVertexAuthorization>,
     worksheet: &nexus_primitives::proof_of_uid::ProofOfUID,
     recipient: &sui::object::UID,
     input_commitment: vector<u8>,
-): bool;
+): bool {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the agent ID of the skill authorization.
-public native fun agent_skill_authorization_agent_id(
-    self: &AgentSkillAuthorization,
-): sui::object::ID;
+public fun agent_skill_authorization_agent_id(self: &AgentSkillAuthorization): sui::object::ID {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the skill ID of the skill authorization.
-public native fun agent_skill_authorization_skill_id(self: &AgentSkillAuthorization): u64;
+public fun agent_skill_authorization_skill_id(self: &AgentSkillAuthorization): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the interface version of the skill authorization.
-public native fun agent_skill_authorization_interface_version(
+public fun agent_skill_authorization_interface_version(
     self: &AgentSkillAuthorization,
-): nexus_interface::version::InterfaceVersion;
+): nexus_interface::version::InterfaceVersion {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns the number of vertex authorization grants held by the skill authorization.
-public native fun agent_skill_authorization_grant_count(self: &AgentSkillAuthorization): u64;
+public fun agent_skill_authorization_grant_count(self: &AgentSkillAuthorization): u64 {
+    abort ELocalExecutionUnavailable
+}
 
 /// Returns a copy of the vertex authorization grant at the given index.
-public native fun copy_agent_skill_authorization_vertex_grant(
+public fun copy_agent_skill_authorization_vertex_grant(
     self: &AgentSkillAuthorization,
     index: u64,
-): nexus_primitives::authorization::Grant<AgentVertexAuthorization>;
+): nexus_primitives::authorization::Grant<AgentVertexAuthorization> {
+    abort ELocalExecutionUnavailable
+}
 
 /// Destroys a Task authorization after no execution can consume its grants.
-public native fun destroy_agent_skill_authorization(self: AgentSkillAuthorization);
+public fun destroy_agent_skill_authorization(self: AgentSkillAuthorization) {
+    abort ELocalExecutionUnavailable
+}
