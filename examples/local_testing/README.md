@@ -36,15 +36,15 @@ instead of hiding it behind application detail.
 +----------------------+                     +-----------------------+
 ```
 
-[`application.move`](tap/sources/application.move) owns the product state and
-Agent lifecycle. [`review_vertex.move`](tap/sources/review_vertex.move) is the
+[`application.move`](sources/application.move) owns the product state and
+Agent lifecycle. [`review_vertex.move`](sources/review_vertex.move) is the
 onchain Tool that Nexus invokes. The application module does not need its own
 `execute` function because it is not registered as the Tool.
 
 ## Read the example in this order
 
 1. `ApplicationState` in
-   [`application.move`](tap/sources/application.move) shows how an Agent is
+   [`application.move`](sources/application.move) shows how an Agent is
    embedded in application state.
 2. `setup_agent` shows DAG creation, Tool binding, skill registration and DAG
    finalization.
@@ -54,7 +54,7 @@ onchain Tool that Nexus invokes. The application module does not need its own
    onchain Tool.
 5. `review_for_tool` shows how application logic consumes the released grant.
 6. `cancel_review` and `close_review` show Task cleanup and reserve refund.
-7. [`application_tests.move`](tap/tests/application_tests.move) shows how the
+7. [`application_tests.move`](tests/application_tests.move) shows how the
    same paths are tested without private Nexus source.
 
 ## The `execute` contract
@@ -97,14 +97,14 @@ witness requirement with the same state UID and calls the published
 From this directory:
 
 ```sh
-nexus tap test --path tap
+nexus tap test
 ```
 
 From any other directory:
 
 ```sh
 nexus tap test \
-  --path path/to/nexus-move-packages/examples/local_testing/tap
+  --path path/to/nexus-move-packages/examples/local_testing
 ```
 
 The default environment is Testnet. The command needs network access to read
@@ -114,16 +114,16 @@ Nexus source.
 Useful focused commands:
 
 ```sh
-nexus tap test --path tap --list
-nexus tap test --path tap setup_binds
-nexus tap test --path tap execute_accepts --threads 1
-nexus tap test --path tap --build-env mainnet
+nexus tap test --list
+nexus tap test setup_binds
+nexus tap test execute_accepts --threads 1
+nexus tap test --build-env mainnet
 ```
 
 Use `sui move build` as a fast compile check:
 
 ```sh
-sui move build --path tap --build-env testnet --warnings-are-errors
+sui move build --build-env testnet --warnings-are-errors
 ```
 
 Do not use `sui move test` for tests that call Nexus. It executes the public
@@ -164,10 +164,10 @@ tests. Small module extensions recreate only the missing state boundary:
 
 | Extension | Fixture responsibility |
 | --- | --- |
-| [`agent_registry_extension.move`](tap/tests/agent_registry_extension.move) | Constructs an empty local Agent registry. |
-| [`tool_registry_extension.move`](tap/tests/tool_registry_extension.move) | Constructs an empty local Tool registry and test collateral, then calls the published Tool registration function. |
-| [`runtime_authority_extension.move`](tap/tests/runtime_authority_extension.move) | Constructs the authority state read by local scheduling. |
-| [`dag_extension.move`](tap/tests/dag_extension.move) | Marks a locally held DAG final so the test can inspect and later destroy it. |
+| [`agent_registry_extension.move`](tests/agent_registry_extension.move) | Constructs an empty local Agent registry. |
+| [`tool_registry_extension.move`](tests/tool_registry_extension.move) | Constructs an empty local Tool registry and test collateral, then calls the published Tool registration function. |
+| [`runtime_authority_extension.move`](tests/runtime_authority_extension.move) | Constructs the authority state read by local scheduling. |
+| [`dag_extension.move`](tests/dag_extension.move) | Marks a locally held DAG final so the test can inspect and later destroy it. |
 | Era extensions | Construct private storage witness values needed by the registry fixtures. |
 
 <!-- markdownlint-enable MD013 -->

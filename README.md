@@ -38,7 +38,7 @@ Run the complete embedded application in this repository with:
 ```sh
 git clone https://github.com/Talus-Network/nexus-move-packages.git
 cd nexus-move-packages/examples/local_testing
-nexus tap test --path tap
+nexus tap test
 ```
 
 The embedded example does not use `skill.tap.json` or `dag.json`. Its
@@ -68,9 +68,9 @@ ApplicationState owns Agent
 
 The application module itself does not need a function named `execute`.
 Every module registered as an onchain Tool does. In the example,
-[`review_vertex::execute`](examples/local_testing/tap/sources/review_vertex.move)
+[`review_vertex::execute`](examples/local_testing/sources/review_vertex.move)
 is the function Nexus calls, while
-[`application.move`](examples/local_testing/tap/sources/application.move) owns
+[`application.move`](examples/local_testing/sources/application.move) owns
 the Agent and application lifecycle.
 
 ## How local execution works
@@ -81,8 +81,8 @@ the Agent and application lifecycle.
 | --- | --- | --- |
 | `sui move build --build-env testnet` | The compiler and public interfaces | Types, imports, addresses and package graph are valid |
 | `sui move test --build-env testnet` | Local interface stub bodies | TAP code that does not call Nexus can run; direct Nexus calls intentionally abort |
-| `nexus tap test --path tap` | Exact published Testnet Nexus bytecode in a local Sui VM | TAP behavior and reachable Nexus behavior work with locally constructed state |
-| `nexus tap test --path tap --build-env mainnet` | Exact published Mainnet Nexus bytecode | The same unit suite is compatible with the selected Mainnet package graph |
+| `nexus tap test --path examples/local_testing` | Exact published Testnet Nexus bytecode in a local Sui VM | TAP behavior and reachable Nexus behavior work with locally constructed state |
+| `nexus tap test --path examples/local_testing --build-env mainnet` | Exact published Mainnet Nexus bytecode | The same unit suite is compatible with the selected Mainnet package graph |
 | Testnet transaction | Published TAP and Nexus packages with live objects | Publication, object access, gas, routing, leaders and external services work together |
 
 <!-- markdownlint-enable MD013 -->

@@ -63,6 +63,8 @@ The Testnet walkthrough additionally needs a funded Sui address, the same
 signer configured in the Nexus CLI and an owned `Coin<US>` for Tool collateral.
 Those assets are used only after local acceptance passes.
 
+Commands before the first explicit `cd` run from the repository root.
+
 ## Understand the module boundary
 
 An embedded TAP normally contains at least two modules:
@@ -154,7 +156,10 @@ syntax is gated by that edition. Production source can still use normal Move
 Build for the same environment that you plan to use:
 
 ```sh
-sui move build --path tap --build-env testnet --warnings-are-errors
+sui move build \
+  --path examples/local_testing \
+  --build-env testnet \
+  --warnings-are-errors
 ```
 
 The build environment selects package records and addresses. It does not make
@@ -293,7 +298,7 @@ Run the complete suite:
 
 ```sh
 cd examples/local_testing
-nexus tap test --path tap
+nexus tap test
 ```
 
 The command does the following in memory:
@@ -327,10 +332,10 @@ records and read public chain bytecode.
 Useful development commands:
 
 ```sh
-nexus tap test --path tap --list
-nexus tap test --path tap setup_binds
-nexus tap test --path tap execute_accepts --threads 1
-nexus tap test --path tap --build-env mainnet
+nexus tap test --list
+nexus tap test setup_binds
+nexus tap test execute_accepts --threads 1
+nexus tap test --build-env mainnet
 ```
 
 Use a filter to shorten a feedback loop, then run the unfiltered suite before
@@ -342,7 +347,7 @@ The source packages in this repository contain interface bodies that abort
 when called locally. Therefore:
 
 ```sh
-sui move test --path tap --build-env testnet
+sui move test --build-env testnet
 ```
 
 is suitable only for TAP tests that never call Nexus. It is not a substitute
@@ -523,6 +528,12 @@ Local success is the gate to Testnet, not a replacement for it. The following
 steps use placeholders beginning with `0x`. Replace every placeholder with the
 value from your environment.
 
+Start from the application package:
+
+```sh
+cd examples/local_testing
+```
+
 ### 1. Prepare both clients
 
 Point the Sui CLI at Testnet and select the funded address that will publish
@@ -571,8 +582,8 @@ the returned capabilities should be the address you intend to operate.
 ### 2. Repeat local acceptance
 
 ```sh
-sui move build --path tap --build-env testnet --warnings-are-errors
-nexus tap test --path tap --threads 1
+sui move build --build-env testnet --warnings-are-errors
+nexus tap test --threads 1
 ```
 
 Before publication, replace the example Tool FQN in `application.move` with a
@@ -580,10 +591,8 @@ unique FQN that you control. Rebuild and rerun the suite after the change.
 
 ### 3. Publish the TAP package
 
-From `examples/local_testing`:
-
 ```sh
-sui client publish tap \
+sui client publish . \
   --build-env testnet \
   --skip-dependency-verification \
   --gas-budget 300000000 \
@@ -792,7 +801,7 @@ binary with `nexus --version` and `nexus tap test --help` before continuing.
 ### Nexus calls abort with `ELocalExecutionUnavailable`
 
 The suite was run with `sui move test`, so it reached interface stub bodies.
-Run `nexus tap test --path tap`.
+Run `nexus tap test` from the package directory.
 
 ### An extension is rejected by the parser
 
@@ -859,7 +868,7 @@ Before Testnet:
 
 1. The Tool FQN is unique and identical in code and deployment input.
 2. `sui move build --build-env testnet --warnings-are-errors` passes.
-3. Unfiltered `nexus tap test --path tap` passes.
+3. Unfiltered `nexus tap test` passes.
 4. Every protected state change has success, rejection and wrong authority
    coverage where material.
 5. Every Tool callback checks its exact concrete input commitment.
@@ -872,7 +881,7 @@ Before Mainnet:
 1. The entire isolated Testnet flow has passed.
 2. Testnet assertions include final application and Task state, not only a
    successful transaction digest.
-3. `nexus tap test --path tap --build-env mainnet` passes.
+3. `nexus tap test --build-env mainnet` passes.
 4. `sui move build --build-env mainnet --warnings-are-errors` passes.
 5. Mainnet Tool records, schemas, witnesses and Nexus object configuration are
    verified independently.
