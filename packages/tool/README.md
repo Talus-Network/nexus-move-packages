@@ -43,24 +43,25 @@ sui move build --build-env testnet
 
 - `sui move build` reads these declarations and links the consumer to the
   selected network's published `nexus_tool` address.
-- `sui move test` runs locally. Calling an existing interface function aborts
-  with `ELocalExecutionUnavailable` because the implementation is not here.
+- `sui move test` runs the local interface stubs. A direct Nexus call aborts
+  with `ELocalExecutionUnavailable`.
+- `nexus tap test` replaces the stubs in the test VM with the selected
+  published Nexus bytecode.
 - A submitted Testnet or Mainnet transaction executes the Nexus bytecode at
   the published address, not the local aborting body.
 
 ## Local and integration tests
 
-Use `#[test_only]` module extensions for local tests that need specific Tool
-value shapes. Extensions require `edition = "2024.alpha"`, can add minimal test
-helpers, and cannot replace Tool registration, pricing, authorization,
-accounting, or settlement behavior.
+Run TAP suites that call Nexus with `nexus tap test --path tap`. Use
+`#[test_only]` module extensions for Tool setup, inspection, and cleanup when
+public constructors are not enough. Extensions require
+`edition = "2024.alpha"` and cannot replace existing functions.
 
-Test those behaviors with real Testnet transactions and assert successful
-effects, emitted events, and object readback. `--build-env testnet` selects the
-dependency graph; `sui move test` still executes only in the local VM.
+Test live Tool registration, external service access, transaction effects,
+gas, and network routing on Testnet.
 
 Read the complete
-[stub and testing guide](https://github.com/Talus-Network/nexus-move-packages#local-move-tests)
+[TAP development and testing guide](https://github.com/Talus-Network/nexus-move-packages/blob/main/docs/tap_development.md)
 and the
 [onchain Tool guide](https://docs.talus.network/guides/tool-development/build-onchain-tool).
 

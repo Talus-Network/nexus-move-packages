@@ -42,31 +42,37 @@ sui move build --build-env testnet
 
 - `sui move build` reads these declarations and links the consumer to the
   selected network's published `nexus_interface` address.
-- `sui move test` runs locally. Calling an existing interface function aborts
-  with `ELocalExecutionUnavailable` because the implementation is not here.
+- `sui move test` runs the local interface stubs. A direct Nexus call aborts
+  with `ELocalExecutionUnavailable`.
+- `nexus tap test` replaces the stubs in the test VM with the selected
+  published Nexus bytecode.
 - A submitted Testnet or Mainnet transaction executes the Nexus bytecode at
   the published address, not the local aborting body.
 
 ## Local tests
 
-Use a `#[test_only]` module extension under the consumer package's `tests/`
-directory when application logic needs a Nexus value that public consumer code
-cannot construct or inspect. Module extensions require
+Run TAP suites that call Nexus with:
+
+```sh
+nexus tap test --path tap
+```
+
+Use a `#[test_only]` module extension under the TAP package's `tests/`
+directory when a test needs a private value shape. Module extensions require
 `edition = "2024.alpha"`.
 
 An extension shares the scope of the module it extends, so it can add the
-smallest constructor or observation needed by the test. It cannot override an
-existing function and must not be used as evidence for published validation,
-authorization, payment, or verifier behavior.
+smallest constructor, observation, or cleanup helper needed by the test. It
+cannot override an existing Nexus function. Calls to existing functions made
+by `nexus tap test` execute the selected published bytecode.
 
 Read the complete
-[stub and testing guide](https://github.com/Talus-Network/nexus-move-packages#local-move-tests)
+[TAP development and testing guide](https://github.com/Talus-Network/nexus-move-packages/blob/main/docs/tap_development.md)
 and run the
 [executable example](https://github.com/Talus-Network/nexus-move-packages/tree/main/examples/local_testing).
 
-Use a real Testnet transaction for behavior that crosses into Nexus.
-`--build-env testnet` resolves Testnet dependencies; it does not make the local
-Move test VM call Testnet.
+Use a real Testnet transaction for live shared state, publication, transaction
+effects, gas, network routing, and external services.
 
 ## Documentation
 

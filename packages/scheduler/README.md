@@ -40,25 +40,26 @@ sui move build --build-env testnet
 
 - `sui move build` reads these declarations and links the consumer to the
   selected network's published `nexus_scheduler` address.
-- `sui move test` runs locally. Calling an existing interface function aborts
-  with `ELocalExecutionUnavailable` because the implementation is not here.
+- `sui move test` runs the local interface stubs. A direct Nexus call aborts
+  with `ELocalExecutionUnavailable`.
+- `nexus tap test` replaces the stubs in the test VM with the selected
+  published Nexus bytecode.
 - A submitted Testnet or Mainnet transaction executes the Nexus bytecode at
   the published address, not the local aborting body.
 
 ## Local and integration tests
 
-Use `#[test_only]` module extensions for local application tests that need
-specific Task, schedule, or status value shapes. Extensions require
-`edition = "2024.alpha"`, can add minimal helpers, and cannot replace Task
-creation, dispatch, execution, settlement, timeout, or scheduling behavior.
+Run TAP suites that call Nexus with `nexus tap test --path tap`. Use
+`#[test_only]` module extensions for Task, schedule, and status setup or
+inspection when public constructors are not enough. Extensions require
+`edition = "2024.alpha"` and cannot replace existing functions.
 
-Test those behaviors with real Testnet transactions using the matching Nexus
-shared objects. Require successful effects, assert lifecycle events, and read
-back the Task and execution state. `--build-env testnet` does not make
-`sui move test` communicate with Testnet.
+Test live shared objects, transaction effects, gas, leader selection, and
+network routing on Testnet. Require successful effects, assert lifecycle
+events, and read back Task and execution state.
 
 Read the complete
-[stub and testing guide](https://github.com/Talus-Network/nexus-move-packages#local-move-tests)
+[TAP development and testing guide](https://github.com/Talus-Network/nexus-move-packages/blob/main/docs/tap_development.md)
 and run the
 [executable example](https://github.com/Talus-Network/nexus-move-packages/tree/main/examples/local_testing).
 

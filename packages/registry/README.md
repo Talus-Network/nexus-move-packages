@@ -41,24 +41,25 @@ sui move build --build-env testnet
 
 - `sui move build` reads these declarations and links the consumer to the
   selected network's published `nexus_registry` address.
-- `sui move test` runs locally. Calling an existing interface function aborts
-  with `ELocalExecutionUnavailable` because the implementation is not here.
+- `sui move test` runs the local interface stubs. A direct Nexus call aborts
+  with `ELocalExecutionUnavailable`.
+- `nexus tap test` replaces the stubs in the test VM with the selected
+  published Nexus bytecode.
 - A submitted Testnet or Mainnet transaction executes the Nexus bytecode at
   the published address, not the local aborting body.
 
 ## Local and integration tests
 
-Use `#[test_only]` module extensions only for application logic that needs
-specific registry value shapes. Extensions require
-`edition = "2024.alpha"`; they cannot reproduce registry ownership,
-authorization, key rotation, staking, fee, or shared object behavior.
+Run TAP suites that call Nexus with `nexus tap test --path tap`. Use
+`#[test_only]` module extensions for the registry setup, inspection, and
+cleanup that a test needs. Extensions require `edition = "2024.alpha"` and
+cannot replace existing functions.
 
-Exercise those behaviors on Testnet with the matching registry objects and
-assert transaction effects, events, and object readback. A Testnet build
-environment does not make `sui move test` submit transactions.
+Exercise live registry objects, transaction effects, gas, and network routing
+on Testnet.
 
 Read the complete
-[stub and testing guide](https://github.com/Talus-Network/nexus-move-packages#local-move-tests).
+[TAP development and testing guide](https://github.com/Talus-Network/nexus-move-packages/blob/main/docs/tap_development.md).
 
 ## Documentation
 

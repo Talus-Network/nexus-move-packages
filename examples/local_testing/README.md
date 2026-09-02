@@ -1,58 +1,83 @@
-# Local Move testing example
+# Complete TAP unit test example
 
-This is an executable consumer package showing how to test application logic
-when Nexus is available only as interface stubs.
+This project shows a complete TAP owned flow running beside the exact Nexus
+bytecode published on Sui Testnet. It uses the same project layout created by
+`nexus tap scaffold`.
 
-It demonstrates both sides of the local boundary:
+The TAP defines a content review schema, converts raw bytes to canonical Nexus
+data, accepts or rejects the input, creates canonical tagged output, updates
+TAP owned state, and checks the complete result contract. The suite also shows
+how a developer can recreate a missing Nexus test fixture with a test module
+extension.
 
-- application logic can use Nexus types without calling Nexus functions;
-- test only module extensions can construct and inspect otherwise private
-  Nexus value shapes;
-- a call to an existing Nexus function aborts with the documented
-  `ELocalExecutionUnavailable` error.
+## What the suite proves
+
+<!-- markdownlint-disable MD013 -->
+
+| Test | Evidence |
+| --- | --- |
+| `complete_flow_accepts_and_rejects_canonical_inputs` | The complete TAP owned success and rejection paths work with published Nexus constructors, schema checks, views, and output builders. |
+| `extension_fixture_exercises_invalid_input_path` | A developer extension can create a private Nexus value shape and drive a TAP error path. |
+| `state_persists_across_transaction_boundaries` | `sui::test_scenario` preserves TAP shared object state across transaction boundaries. |
+| `extension_calls_published_nexus_functions` | A function added by an extension can call an existing published Nexus function. |
+| `extensions_compose_across_nexus_packages` | Test helpers added to separate Nexus packages can call each other. |
+| `published_constructor_rejects_an_empty_collection` | Expected failure assertions observe the published Nexus abort location. |
+
+<!-- markdownlint-enable MD013 -->
 
 ## Files
 
 | File | Purpose |
 | --- | --- |
-| [`Move.toml`](Move.toml) | Uses `edition = "2024.alpha"`, which is currently required for module extensions, and points to this checkout's interface packages. |
-| [`sources/application.move`](sources/application.move) | Application logic that stores and reads Nexus values without crossing into Nexus behavior. |
-| [`tests/data_extension.move`](tests/data_extension.move) | Extends `nexus_primitives::data` with the smallest constructor and observation needed by the test. |
-| [`tests/task_extension.move`](tests/task_extension.move) | Extends `nexus_scheduler::task` with helpers for a private `TaskStatus` variant. |
-| [`tests/application_tests.move`](tests/application_tests.move) | Tests application logic and verifies that an existing Nexus constructor aborts locally. |
+| [`skill.tap.json`](skill.tap.json) | Defines the skill requirements and points to the DAG. |
+| [`dag.json`](dag.json) | Defines one review vertex and its input port. |
+| [`tap/Move.toml`](tap/Move.toml) | Selects the interface packages used by the TAP. |
+| [`tap/sources/application.move`](tap/sources/application.move) | Implements the complete TAP owned review flow. |
+| [`tap/tests/application_tests.move`](tap/tests/application_tests.move) | Arranges inputs, runs the flow, asserts output and state, and cleans up resources. |
+| [`tap/tests/data_extension.move`](tap/tests/data_extension.move) | Adds constructors and views inside `nexus_primitives::data` for tests only. |
+| [`tap/tests/tagged_output_extension.move`](tap/tests/tagged_output_extension.move) | Adds one focused output assertion helper. |
+| [`tap/tests/task_extension.move`](tap/tests/task_extension.move) | Demonstrates extensions that compose across Nexus packages. |
 
-The example uses local dependencies so it always tests the interfaces in the
-current checkout. In an external consumer package, use the corresponding MVR
-dependencies instead:
+The example uses local dependencies so it always checks the interfaces in the
+current repository checkout. A developer package should use MVR dependencies:
 
 ```toml
 [dependencies]
+nexus_interface = { r.mvr = "@talus/nexus-interface" }
 nexus_primitives = { r.mvr = "@talus/nexus-primitives" }
 nexus_scheduler = { r.mvr = "@talus/nexus-scheduler" }
 ```
 
-## Run the tests
+## Run the suite
 
-Run the example from the repository root:
+From any directory:
 
 ```sh
-sui move test --path examples/local_testing --warnings-are-errors
+nexus tap test \
+  --path path/to/nexus-move-packages/examples/local_testing/tap
+nexus tap validate-skill \
+  --config path/to/nexus-move-packages/examples/local_testing/skill.tap.json
 ```
 
-Both tests should pass: one exercises the extensions and application logic;
-the other succeeds because the stub abort is expected.
+The command needs network access to resolve MVR records and fetch published
+Nexus bytecode. It does not need a wallet, private key, gas, or Nexus source.
 
-## Adapt it to an application
+Useful focused commands:
 
-1. Keep code that invokes Nexus behind a small application boundary.
-1. Put `#[test_only] extend module ...` files under `tests/`.
-1. Add only the constructors and observations that the local test needs.
-1. Test application decisions and transformations with those values.
-1. Add an expected failure test if the local Nexus boundary should remain
-   explicit.
-1. Submit real Testnet transactions for Nexus authorization, validation,
-   events, shared objects, and state transitions.
+```sh
+nexus tap test --path path/to/package --list
+nexus tap test --path path/to/package complete_flow
+nexus tap test --path path/to/package --build-env mainnet
+```
 
-Module extensions do not override existing functions and are not a local
-implementation of Nexus. See the repository's complete
-[stub and testing guide](../../README.md#local-move-tests).
+`dag.json` uses the illustrative Tool name
+`xyz.example.content_review@1`. Replace it with a Tool registered in the target
+environment before publication.
+
+Do not run this example with `sui move test` when the assertion requires Nexus
+behavior. That command sees only the interface stub bodies. `nexus tap test`
+replaces those bodies with the selected published bytecode inside the local
+test VM.
+
+Read the [complete TAP development and testing guide](../../docs/tap_development.md)
+before adapting the fixture pattern to protocol objects or shared state.

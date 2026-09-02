@@ -38,24 +38,25 @@ sui move build --build-env testnet
 
 - `sui move build` reads these declarations and links the consumer to the
   selected network's published `nexus_workflow` address.
-- `sui move test` runs locally. Calling an existing interface function aborts
-  with `ELocalExecutionUnavailable` because the implementation is not here.
+- `sui move test` runs the local interface stubs. A direct Nexus call aborts
+  with `ELocalExecutionUnavailable`.
+- `nexus tap test` replaces the stubs in the test VM with the selected
+  published Nexus bytecode.
 - A submitted Testnet or Mainnet transaction executes the Nexus bytecode at
   the published address, not the local aborting body.
 
 ## Local and integration tests
 
-Use `#[test_only]` module extensions only to construct or observe workflow
-value shapes needed by local application logic. Extensions require
-`edition = "2024.alpha"` and cannot reproduce DAG advancement, invocation,
-verification, settlement, failure, event, or shared object behavior.
+Run TAP suites that call Nexus with `nexus tap test --path tap`. Use
+`#[test_only]` module extensions to construct or observe workflow value shapes
+needed by the TAP. Extensions require `edition = "2024.alpha"` and cannot
+replace existing functions.
 
-Exercise real workflow behavior on Testnet and assert transaction effects,
-events, and execution object readback. `--build-env testnet` resolves Testnet
-dependencies; the local Move test VM remains offline.
+Exercise live workflow objects, transaction effects, gas, leader behavior, and
+external services on Testnet.
 
 Read the complete
-[stub and testing guide](https://github.com/Talus-Network/nexus-move-packages#local-move-tests).
+[TAP development and testing guide](https://github.com/Talus-Network/nexus-move-packages/blob/main/docs/tap_development.md).
 
 ## Documentation
 
