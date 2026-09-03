@@ -1,11 +1,6 @@
 # Develop and test a TAP application
 
-This guide shows how to build an embedded Talus Agent Package, test its full
-application controlled lifecycle locally and then verify the network boundary
-on Testnet.
-
-Every command maps to the executable application in
-[`examples/local_testing`](../examples/local_testing).
+This guide shows how to build an embedded Talus Agent Package, test its full application controlled lifecycle locally and then verify the network boundary on Testnet. Every command maps to the executable application in [`examples/local_testing`](../examples/local_testing).
 
 ## The result
 
