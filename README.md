@@ -1,15 +1,10 @@
 # Nexus Move packages
 
-Public Move interfaces and executable TAP examples for applications that use
-the Nexus protocol packages published on Sui.
+Public Move interfaces and executable TAP examples for applications that use the Nexus protocol packages published on Sui.
 
-> **Important:** This repository describes the public Nexus surface. It does
-> not contain the private Nexus implementation. Use these packages as
-> dependencies. Do not publish them or use them to upgrade Nexus.
+> **Important:** This repository describes the public Nexus surface. It does not contain the private Nexus implementation. Use these packages as dependencies. Do not publish them or use them to upgrade Nexus.
 
-The interfaces preserve public types and function signatures. The Nexus CLI
-can combine them with the exact Nexus bytecode published on Testnet or Mainnet,
-so TAP developers can run meaningful Move unit tests without Nexus source.
+The interfaces preserve public types and function signatures. The Nexus CLI can combine them with the exact Nexus bytecode published on Testnet or Mainnet, so TAP developers can run meaningful Move unit tests without Nexus source.
 
 ## Choose the TAP form
 
@@ -41,12 +36,9 @@ cd nexus-move-packages/examples/local_testing
 nexus tap test
 ```
 
-The embedded example does not use `skill.tap.json` or `dag.json`. Its
-application module creates and binds both structures onchain.
+The embedded example does not use `skill.tap.json` or `dag.json`. Its application module creates and binds both structures onchain.
 
-Read the [TAP development and testing guide](docs/tap_development.md) for the
-complete architecture, test fixture pattern, Testnet walkthrough and release
-checklist.
+Read the [TAP development and testing guide](docs/tap_development.md) for the complete architecture, test fixture pattern, Testnet walkthrough and release checklist.
 
 ## What the embedded example proves
 
@@ -66,12 +58,7 @@ ApplicationState owns Agent
         +--> close_review refunds the Task reserve and clears local state
 ```
 
-The application module itself does not need a function named `execute`.
-Every module registered as an onchain Tool does. In the example,
-[`review_vertex::execute`](examples/local_testing/sources/review_vertex.move)
-is the function Nexus calls, while
-[`application.move`](examples/local_testing/sources/application.move) owns
-the Agent and application lifecycle.
+The application module itself does not need a function named `execute`. Every module registered as an onchain Tool does. In the example, [`review_vertex::execute`](examples/local_testing/sources/review_vertex.move) is the function Nexus calls, while [`application.move`](examples/local_testing/sources/application.move) owns the Agent and application lifecycle.
 
 ## How local execution works
 
@@ -87,18 +74,13 @@ the Agent and application lifecycle.
 
 <!-- markdownlint-enable MD013 -->
 
-`nexus tap test` resolves the package records, reads published modules from
-Sui, adds developer `#[test_only]` extension functions in memory, verifies the
-complete modules, then runs the standard Move unit test VM. Existing Nexus
-functions retain their published bytecode.
+`nexus tap test` resolves the package records, reads published modules from Sui, adds developer `#[test_only]` extension functions in memory, verifies the complete modules, then runs the standard Move unit test VM. Existing Nexus functions retain their published bytecode.
 
-The command needs network access. It does not need a wallet, private key, gas
-or Nexus source.
+The command needs network access. It does not need a wallet, private key, gas or Nexus source.
 
 ## Declare direct dependencies
 
-Declare every Nexus package imported directly by the TAP source or tests. MVR
-resolves the remaining graph.
+Declare every Nexus package imported directly by the TAP source or tests. MVR resolves the remaining graph.
 
 <!-- markdownlint-disable MD013 -->
 
@@ -114,9 +96,7 @@ resolves the remaining graph.
 
 <!-- markdownlint-enable MD013 -->
 
-An embedded application that schedules its own Tasks imports the kernel
-directly. The kernel currently has no MVR name, so pin its public interface from
-this repository:
+An embedded application that schedules its own Tasks imports the kernel directly. The kernel currently has no MVR name, so pin its public interface from this repository:
 
 <!-- markdownlint-disable MD013 -->
 
@@ -137,18 +117,13 @@ nexus_tool = { r.mvr = "@talus/nexus-tool" }
 
 <!-- markdownlint-enable MD013 -->
 
-The example uses local paths instead, which makes repository changes and its
-tests use the same interface checkout. Pin a repository revision in an
-independent project so builds remain reproducible.
+The example uses local paths instead, which makes repository changes and its tests use the same interface checkout. Pin a repository revision in an independent project so builds remain reproducible.
 
-Use `edition = "2024.alpha"` when tests contain module extensions. A package
-without extensions can use the stable `2024` edition.
+Use `edition = "2024.alpha"` when tests contain module extensions. A package without extensions can use the stable `2024` edition.
 
 ## Write focused fixtures
 
-Start with public Nexus constructors. When a unit test needs private deployment
-state or a helper that was removed before publication, define the smallest
-developer owned extension under `tests/`:
+Start with public Nexus constructors. When a unit test needs private deployment state or a helper that was removed before publication, define the smallest developer owned extension under `tests/`:
 
 ```move
 #[test_only]
@@ -160,27 +135,15 @@ public fun v1_for_testing(): V1 {
 }
 ```
 
-An extension has the scope needed to construct private layouts described by
-the interface. It may add functions only. It cannot replace an existing Nexus
-function. The CLI rejects function redefinition and any ABI or layout mismatch
-encountered while linking the test suite before running tests.
+An extension has the scope needed to construct private layouts described by the interface. It may add functions only. It cannot replace an existing Nexus function. The CLI rejects function redefinition and any ABI or layout mismatch encountered while linking the test suite before running tests.
 
-Use extensions to arrange and inspect state. Call published Nexus functions
-for behavior. The complete example follows that boundary for Tool
-registration, Agent attachment, skill binding, Task scheduling, authorization,
-Tool result finalization, cancellation and refund.
+Use extensions to arrange and inspect state. Call published Nexus functions for behavior. The complete example follows that boundary for Tool registration, Agent attachment, skill binding, Task scheduling, authorization, Tool result finalization, cancellation and refund.
 
 ## Know the testing boundary
 
-Unit test every deterministic TAP path and every Nexus path whose complete
-state can be constructed locally. Use Testnet once an assertion depends on a
-live shared object, leader selection, submitted transaction, gas, RPC, indexer
-or offchain Tool.
+Unit test every deterministic TAP path and every Nexus path whose complete state can be constructed locally. Use Testnet once an assertion depends on a live shared object, leader selection, submitted transaction, gas, RPC, indexer or offchain Tool.
 
-Passing local tests is strong evidence about application logic and published
-bytecode compatibility. It is not evidence that current Testnet objects or
-services are configured correctly. The guide shows how to preserve that
-distinction without leaving important TAP logic untested.
+Passing local tests is strong evidence about application logic and published bytecode compatibility. It is not evidence that current Testnet objects or services are configured correctly. The guide shows how to preserve that distinction without leaving important TAP logic untested.
 
 ## Package guides
 
@@ -192,21 +155,15 @@ distinction without leaving important TAP logic untested.
 6. [`nexus_workflow`](packages/workflow)
 7. [`nexus_scheduler`](packages/scheduler)
 
-Move API reference and Nexus setup documentation are available in the
-[Talus developer documentation](https://docs.talus.network/).
+Move API reference and Nexus setup documentation are available in the [Talus developer documentation](https://docs.talus.network/).
 
 ## Source and publication safety
 
-Each package has a `Published.toml` file with Testnet and Mainnet deployment
-records. These records select published dependencies; they do not make the
-interface source equal to the private implementation source.
+Each package has a `Published.toml` file with Testnet and Mainnet deployment records. These records select published dependencies; they do not make the interface source equal to the private implementation source.
 
-Do not publish an interface package. Do not use one to upgrade Nexus. Source
-verification against Nexus is expected to report a mismatch because the
-implementation source is intentionally absent.
+Do not publish an interface package. Do not use one to upgrade Nexus. Source verification against Nexus is expected to report a mismatch because the implementation source is intentionally absent.
 
-Sui package bytecode is public chain data and is inherently inspectable. The
-test command downloads that bytecode but does not expose Nexus source.
+Sui package bytecode is public chain data and is inherently inspectable. The test command downloads that bytecode but does not expose Nexus source.
 
 ## License
 
