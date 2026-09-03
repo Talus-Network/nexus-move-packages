@@ -1,10 +1,12 @@
 [package]
 name = "nexus_local_testing"
+version = "1.0.0"
 edition = "2024.alpha"
 
 [dependencies]
+nexus_interface = { local = "../../packages/interface" }
+nexus_kernel = { local = "../../packages/kernel" }
 nexus_primitives = { local = "../../packages/primitives" }
+nexus_registry = { local = "../../packages/registry" }
 nexus_scheduler = { local = "../../packages/scheduler" }
-
-[addresses]
-nexus_local_testing = "0x0"
+nexus_tool = { local = "../../packages/tool" }
